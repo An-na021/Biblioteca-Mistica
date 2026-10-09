@@ -1,0 +1,229 @@
+[gd_scene format=3 uid="uid://bg8isuqj4tvhc"]
+
+[ext_resource type="Script" uid="uid://lu37kjvuo1m5" path="res://scripts/main_game.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://bxv11porfccx6" path="res://scripts/interactable.gd" id="3_interactable"]
+[ext_resource type="Script" uid="uid://k3xi8s55612f" path="res://scripts/dialogue_panel.gd" id="5_dialogue"]
+[ext_resource type="Texture2D" uid="uid://0fb2emo0vxdv" path="res://IMG/Backgroud.png" id="6_background"]
+
+[sub_resource type="RectangleShape2D" id="RectShape_door"]
+size = Vector2(115, 223)
+
+[sub_resource type="RectangleShape2D" id="RectShape_window"]
+size = Vector2(81.65634, 270.3932)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tefeu"]
+size = Vector2(232.5, 88.625)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_clipboard"]
+size = Vector2(290, 120)
+
+[node name="Main" type="Node2D" unique_id=1342935080]
+script = ExtResource("1_main")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=923361191]
+position = Vector2(640, 360)
+
+[node name="BackgroundImage" type="Sprite2D" parent="." unique_id=2093111780]
+position = Vector2(-3.0000002, 0.99999905)
+scale = Vector2(0.76555, 0.765143)
+texture = ExtResource("6_background")
+centered = false
+
+[node name="Backdrop" type="Node2D" parent="." unique_id=552478069]
+visible = false
+
+[node name="Wall" type="Polygon2D" parent="Backdrop" unique_id=1839325216]
+position = Vector2(38, 3)
+color = Color(0.435294, 0.498039, 0.384314, 1)
+polygon = PackedVector2Array(0, 0, 1280, 0, 1280, 720, 0, 720)
+
+[node name="Floor" type="Polygon2D" parent="Backdrop" unique_id=822145236]
+color = Color(0.27451, 0.176471, 0.117647, 1)
+polygon = PackedVector2Array(0, 500, 1280, 500, 1280, 720, 0, 720)
+
+[node name="FloorLines" type="Node2D" parent="Backdrop" unique_id=112544834]
+
+[node name="Line1" type="Line2D" parent="Backdrop/FloorLines" unique_id=813593335]
+points = PackedVector2Array(0, 540, 1280, 520)
+width = 3.0
+default_color = Color(0.188235, 0.117647, 0.0745098, 1)
+
+[node name="Line2" type="Line2D" parent="Backdrop/FloorLines" unique_id=647096813]
+points = PackedVector2Array(0, 600, 1280, 570)
+width = 3.0
+default_color = Color(0.188235, 0.117647, 0.0745098, 1)
+
+[node name="LeftShelf" type="Polygon2D" parent="Backdrop" unique_id=425566512]
+color = Color(0.164706, 0.0941176, 0.0588235, 1)
+polygon = PackedVector2Array(70, 95, 405, 95, 405, 475, 70, 475)
+
+[node name="LeftShelfInset" type="Polygon2D" parent="Backdrop" unique_id=688610179]
+color = Color(0.235294, 0.141176, 0.0901961, 1)
+polygon = PackedVector2Array(95, 125, 380, 125, 380, 450, 95, 450)
+
+[node name="ShelfLineA" type="Line2D" parent="Backdrop" unique_id=623003318]
+points = PackedVector2Array(95, 220, 380, 220)
+width = 9.0
+default_color = Color(0.105882, 0.0588235, 0.0352941, 1)
+
+[node name="ShelfLineB" type="Line2D" parent="Backdrop" unique_id=482256033]
+points = PackedVector2Array(95, 325, 380, 325)
+width = 9.0
+default_color = Color(0.105882, 0.0588235, 0.0352941, 1)
+
+[node name="RightShelf" type="Polygon2D" parent="Backdrop" unique_id=1074008398]
+color = Color(0.164706, 0.0941176, 0.0588235, 1)
+polygon = PackedVector2Array(845, 85, 1215, 85, 1215, 470, 845, 470)
+
+[node name="RightShelfInset" type="Polygon2D" parent="Backdrop" unique_id=1647553833]
+color = Color(0.235294, 0.141176, 0.0901961, 1)
+polygon = PackedVector2Array(870, 115, 1190, 115, 1190, 445, 870, 445)
+
+[node name="RightShelfLineA" type="Line2D" parent="Backdrop" unique_id=1836031394]
+points = PackedVector2Array(870, 210, 1190, 210)
+width = 9.0
+default_color = Color(0.105882, 0.0588235, 0.0352941, 1)
+
+[node name="RightShelfLineB" type="Line2D" parent="Backdrop" unique_id=1006078700]
+points = PackedVector2Array(870, 320, 1190, 320)
+width = 9.0
+default_color = Color(0.105882, 0.0588235, 0.0352941, 1)
+
+[node name="Door" type="Area2D" parent="." unique_id=1088746266]
+position = Vector2(622, 253)
+script = ExtResource("3_interactable")
+interaction_name = "Porta"
+description = "A porta range quando alguem chega."
+interaction_type = "door"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Door" unique_id=1503467571]
+position = Vector2(-1, -6)
+shape = SubResource("RectShape_door")
+
+[node name="Window" type="Area2D" parent="." unique_id=46039228]
+position = Vector2(188, 228)
+script = ExtResource("3_interactable")
+interaction_name = "Janela"
+description = "A luz quente do fim da tarde atravessa o vidro antigo."
+interaction_type = "window"
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Window" unique_id=930936706]
+position = Vector2(136, -44)
+scale = Vector2(0.76555, 0.765143)
+shape = SubResource("RectShape_window")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Window" unique_id=1735071521]
+position = Vector2(-8, -67)
+shape = SubResource("RectShape_window")
+
+[node name="CustomerSpawn" type="Node2D" parent="."]
+position = Vector2(600, 425)
+
+[node name="CounterForeground" type="Sprite2D" parent="."]
+position = Vector2(-3.0000002, 547.3)
+scale = Vector2(0.76555, 0.765143)
+texture = ExtResource("6_background")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 714, 1672, 227)
+
+[node name="Lamp" type="Area2D" parent="." unique_id=1755761645]
+position = Vector2(157, 431)
+script = ExtResource("3_interactable")
+interaction_name = "Luminaria antiga"
+description = "A cupula quente deixa tudo com cara de segredo."
+interaction_type = "lamp"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Lamp" unique_id=714800403]
+position = Vector2(14, -1)
+shape = SubResource("RectangleShape2D_tefeu")
+
+[node name="Clipboard" type="Area2D" parent="." unique_id=1873103408]
+position = Vector2(570, 614)
+script = ExtResource("3_interactable")
+interaction_name = "Prancheta de estoque"
+description = "Uma prancheta azul com bordas douradas. Clique para consultar o estoque."
+interaction_type = "clipboard"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Clipboard" unique_id=767951504]
+position = Vector2(0, 10)
+shape = SubResource("RectangleShape2D_clipboard")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=992985193]
+
+[node name="DialoguePanel" type="Control" parent="UI" unique_id=1191378321]
+layout_mode = 3
+anchors_preset = 0
+offset_left = -6.0
+offset_top = 3.0
+offset_right = 742.0
+offset_bottom = 179.0
+script = ExtResource("5_dialogue")
+metadata/_edit_use_anchors_ = true
+
+[node name="Panel" type="Panel" parent="UI/DialoguePanel" unique_id=2081115893]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.91300005
+anchor_bottom = 0.71000004
+offset_right = 0.07598877
+offset_bottom = 0.039993286
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SpeakerLabel" type="Label" parent="UI/DialoguePanel/Panel" unique_id=1705431562]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 18.0
+offset_top = 14.0
+offset_right = -18.0
+offset_bottom = 40.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.929412, 0.823529, 0.603922, 1)
+text = "Cliente"
+
+[node name="TextLabel" type="Label" parent="UI/DialoguePanel/Panel" unique_id=1284271785]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 44.0
+offset_right = -18.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.964706, 0.917647, 0.760784, 1)
+text = "Clique na cliente para ouvir o pedido."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="StatusPanel" type="Panel" parent="UI" unique_id=650707340]
+offset_left = 866.0
+offset_top = 20.0
+offset_right = 1246.0
+offset_bottom = 84.0
+
+[node name="StatusLabel" type="Label" parent="UI/StatusPanel" unique_id=355381084]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 10.0
+offset_right = -16.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.929412, 0.823529, 0.603922, 1)
+text = "Dia 1 | Moedas: 0 | Reputacao: 0"
+vertical_alignment = 1
+
+[node name="ShopButton" type="Button" parent="UI" unique_id=938422014]
+offset_left = 1090.0
+offset_top = 96.0
+offset_right = 1246.0
+offset_bottom = 140.0
+text = "SHOP"

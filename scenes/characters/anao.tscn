@@ -1,0 +1,37 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/customer.gd" id="1"]
+[ext_resource type="Texture2D" path="res://IMG/characters/anao_guerreiro.png" id="2"]
+[ext_resource type="Shader" path="res://shaders/customer_atmosphere.gdshader" id="3"]
+[ext_resource type="Shader" path="res://shaders/customer_shadow.gdshader" id="4"]
+
+[sub_resource type="RectangleShape2D" id="CustomerShape"]
+size = Vector2(360, 300)
+
+[sub_resource type="ShaderMaterial" id="AtmosphereMaterial"]
+shader = ExtResource("3")
+
+[sub_resource type="ShaderMaterial" id="ShadowMaterial"]
+shader = ExtResource("4")
+
+[node name="Customer" type="Area2D"]
+position = Vector2(0, 20)
+script = ExtResource("1")
+customer_name = "Borin, o anao"
+portrait_scale = Vector2(0.556, 0.556)
+
+[node name="PortraitShadow" type="Sprite2D" parent="."]
+position = Vector2(6, 8)
+scale = Vector2(0.556, 0.556)
+texture = ExtResource("2")
+material = SubResource("ShadowMaterial")
+
+[node name="Portrait" type="Sprite2D" parent="."]
+position = Vector2(0, -4)
+scale = Vector2(0.556, 0.556)
+texture = ExtResource("2")
+material = SubResource("AtmosphereMaterial")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -50)
+shape = SubResource("CustomerShape")
