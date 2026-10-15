@@ -6,7 +6,7 @@
 [ext_resource type="Shader" path="res://shaders/customer_shadow.gdshader" id="4"]
 
 [sub_resource type="RectangleShape2D" id="CustomerShape"]
-size = Vector2(360, 300)
+size = Vector2(396, 330)
 
 [sub_resource type="ShaderMaterial" id="AtmosphereMaterial"]
 shader = ExtResource("3")
@@ -18,17 +18,17 @@ shader = ExtResource("4")
 position = Vector2(0, 14)
 script = ExtResource("1")
 customer_name = "Mestre Elian"
-portrait_scale = Vector2(0.560, 0.560)
+portrait_scale = Vector2(0.616, 0.616)
 
 [node name="PortraitShadow" type="Sprite2D" parent="."]
 position = Vector2(6, 8)
-scale = Vector2(0.560, 0.560)
+scale = Vector2(0.616, 0.616)
 texture = ExtResource("2")
 material = SubResource("ShadowMaterial")
 
 [node name="Portrait" type="Sprite2D" parent="."]
 position = Vector2(0, -4)
-scale = Vector2(0.560, 0.560)
+scale = Vector2(0.616, 0.616)
 texture = ExtResource("2")
 material = SubResource("AtmosphereMaterial")
 
