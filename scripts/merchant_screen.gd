@@ -1,7 +1,8 @@
 class_name MerchantScreen
 extends Control
 
-signal purchase_requested(book_id: String)
+signal purchase_requested(book_id: String, condition: String)
+signal supplier_selected(supplier_id: String)
 signal closed
 signal next_day_requested
 
@@ -9,6 +10,8 @@ var offers: Dictionary = {}
 var inventory: Inventory
 var money := 0
 var can_start_next_day := false
+var suppliers: Array = []
+var selected_supplier_id := ""
 
 const PANEL_BACKGROUND := Color("171a15")
 const CARD_BACKGROUND := Color("25281f")
@@ -17,12 +20,20 @@ const TEXT_PRIMARY := Color("f3ead6")
 const TEXT_MUTED := Color("b9ad96")
 const GREEN := Color("9eb77a")
 
-func setup(value_inventory: Inventory, value_offers: Dictionary, value_money: int, value_can_start_next_day := false) -> void:
+func setup(value_inventory: Inventory, value_offers: Dictionary, value_money: int, value_can_start_next_day := false, value_suppliers: Array = [], value_supplier_id := "") -> void:
 	inventory = value_inventory
 	offers = value_offers
 	money = value_money
 	can_start_next_day = value_can_start_next_day
+	suppliers = value_suppliers.duplicate(true)
+	selected_supplier_id = value_supplier_id
 	build()
+
+func set_market(value_offers: Dictionary, supplier_id: String, value_money: int) -> void:
+	offers = value_offers
+	selected_supplier_id = supplier_id
+	money = value_money
+	refresh(value_money)
 
 func refresh(value_money: int) -> void:
 	money = value_money
@@ -57,19 +68,39 @@ func build() -> void:
 	title_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_stack.add_theme_constant_override("separation", 2)
 	header.add_child(title_stack)
-	title_stack.add_child(_make_label("SHOP", 27, GOLD))
+	title_stack.add_child(_make_label("LOJA", 27, GOLD))
 	title_stack.add_child(_make_label("Livros disponíveis para comprar", 14, TEXT_MUTED))
 	header.add_child(_make_badge("MOEDAS  %d" % money, Color("3a3021"), GOLD))
 	var available_titles := 0
 	for value in offers.values():
-		if int(value) > 0:
+		if int(value.get("quantity", 0)) > 0:
 			available_titles += 1
 	header.add_child(_make_badge("%d ofertas" % available_titles, Color("333a2d"), GREEN))
+
+	if not suppliers.is_empty():
+		var supplier_header := _make_label("FORNECEDORES  ·  PREÇO E RISCO VARIAM", 11, GOLD)
+		layout.add_child(supplier_header)
+		var supplier_row := HBoxContainer.new()
+		supplier_row.add_theme_constant_override("separation", 7)
+		layout.add_child(supplier_row)
+		for supplier in suppliers:
+			var supplier_id := str(supplier.get("id", ""))
+			var risk_percent := roundi(float(supplier.get("risk", 0.0)) * 100.0)
+			var price_factor := float(supplier.get("price_factor", 1.0))
+			var price_description := "PREÇO NORMAL" if is_equal_approx(price_factor, 1.0) else ("%d%% MAIS BARATO" % roundi((1.0 - price_factor) * 100.0) if price_factor < 1.0 else "%d%% MAIS CARO" % roundi((price_factor - 1.0) * 100.0))
+			var supplier_button := Button.new()
+			supplier_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			supplier_button.custom_minimum_size.y = 58
+			supplier_button.text = "%s\n%s  ·  RISCO %d%%" % [str(supplier.get("name", "Fornecedor")), price_description, risk_percent]
+			supplier_button.tooltip_text = str(supplier.get("description", "Fornecedor"))
+			_style_supplier_button(supplier_button, supplier_id == selected_supplier_id)
+			supplier_button.pressed.connect(_emit_supplier_selected.bind(supplier_id))
+			supplier_row.add_child(supplier_button)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size.y = 400
+	scroll.custom_minimum_size.y = 360 if not suppliers.is_empty() else 400
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	layout.add_child(scroll)
 
@@ -79,7 +110,14 @@ func build() -> void:
 	scroll.add_child(list)
 
 	for book_id in offers:
-		var available := int(offers[book_id])
+		var offer: Dictionary = offers[book_id]
+		var condition_stock: Dictionary = offer.get("conditions", {})
+		if condition_stock.is_empty() and int(offer.get("quantity", 0)) > 0:
+			var legacy_condition := str(offer.get("condition", "novo"))
+			condition_stock[legacy_condition] = {"quantity": int(offer.get("quantity", 0)), "price": int(offer.get("price", 0))}
+		var available := 0
+		for condition_offer in condition_stock.values():
+			available += int(condition_offer.get("quantity", 0))
 		if available <= 0:
 			continue
 		var book := BookCatalog.get_book(book_id)
@@ -109,28 +147,48 @@ func build() -> void:
 		var metadata := HBoxContainer.new()
 		metadata.add_theme_constant_override("separation", 6)
 		details.add_child(metadata)
-		metadata.add_child(_make_badge("DISPONÍVEL  %d" % available, Color("333a2d"), GREEN))
-		metadata.add_child(_make_badge("COMPRA  %d moedas" % book.buy_price, Color("3a3021"), GOLD))
+		metadata.add_child(_make_badge("OFERTAS  %d" % available, Color("333a2d"), GREEN))
+		metadata.add_child(_make_badge("ESTOQUE: %d" % inventory.get_quantity(book_id), Color("3a3021"), GOLD))
+		var condition_picker := OptionButton.new()
+		condition_picker.custom_minimum_size = Vector2(280, 34)
+		_style_condition_picker(condition_picker)
+		for condition_id in ["novo", "usado", "danificado", "raro"]:
+			if not condition_stock.has(condition_id):
+				continue
+			var condition_offer: Dictionary = condition_stock[condition_id]
+			if int(condition_offer.get("quantity", 0)) <= 0:
+				continue
+			var condition_info := BookCatalog.get_condition(condition_id)
+			var condition_price := int(condition_offer.get("price", BookCatalog.price_for_condition(book, condition_id, "buy_price")))
+			var option_index := condition_picker.item_count
+			condition_picker.add_item("%s  ·  %d un.  ·  %d moedas" % [str(condition_info.get("label", condition_id)).to_upper(), int(condition_offer.get("quantity", 0)), condition_price])
+			condition_picker.set_item_metadata(option_index, condition_id)
+		metadata.add_child(condition_picker)
+		condition_picker.select(0)
+		var selected_condition := str(condition_picker.get_item_metadata(0)) if condition_picker.item_count > 0 else "novo"
+		var purchase_price := int(condition_stock.get(selected_condition, {}).get("price", BookCatalog.price_for_condition(book, selected_condition, "buy_price")))
+		var price_badge := _make_badge("COMPRA  %d moedas" % purchase_price, Color("3a3021"), GOLD)
+		metadata.add_child(price_badge)
 		var description := _make_label(book.description, 12, TEXT_MUTED)
 		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		details.add_child(description)
-		var missing_money: int = maxi(0, int(book.buy_price) - money)
-		if missing_money > 0:
-			var disabled_reason := _make_label("Indisponível: faltam %d moedas." % missing_money, 10, Color("d58b72"))
-			disabled_reason.tooltip_text = "Você não possui moedas suficientes para comprar este livro."
-			disabled_reason.text = "Indisponivel: faltam %d moedas." % missing_money
-			disabled_reason.tooltip_text = "Voce nao possui moedas suficientes para comprar este livro."
-			details.add_child(disabled_reason)
-
 		var buy := Button.new()
 		buy.text = "COMPRAR"
 		buy.custom_minimum_size = Vector2(122, 42)
-		buy.disabled = money < int(book.buy_price)
+		buy.disabled = money < purchase_price
 		buy.tooltip_text = "Você não possui moedas suficientes." if buy.disabled else "Comprar este livro."
 		_style_button(buy, false)
 		buy.tooltip_text = "Voce nao possui moedas suficientes." if buy.disabled else "Comprar este livro."
-		buy.pressed.connect(func() -> void: purchase_requested.emit(book_id))
+		buy.pressed.connect(func() -> void: purchase_requested.emit(book_id, str(condition_picker.get_item_metadata(condition_picker.selected))))
 		row.add_child(buy)
+		condition_picker.item_selected.connect(func(index: int) -> void:
+			var selected_id := str(condition_picker.get_item_metadata(index))
+			var selected_offer: Dictionary = condition_stock.get(selected_id, {})
+			var selected_price := int(selected_offer.get("price", BookCatalog.price_for_condition(book, selected_id, "buy_price")))
+			price_badge.get_child(0).text = "COMPRA  %d moedas" % selected_price
+			buy.disabled = money < selected_price
+			buy.tooltip_text = "Voce nao possui moedas suficientes." if buy.disabled else "Comprar este livro na condicao selecionada."
+		)
 
 	var footer := HBoxContainer.new()
 	footer.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -202,6 +260,67 @@ func _style_button(button: Button, prominent := false) -> void:
 	disabled.bg_color = Color("292b25")
 	disabled.border_color = Color("393a31")
 	button.add_theme_stylebox_override("disabled", disabled)
+
+func _style_condition_picker(picker: OptionButton) -> void:
+	picker.add_theme_font_size_override("font_size", 12)
+	picker.add_theme_color_override("font_color", TEXT_PRIMARY)
+	picker.add_theme_color_override("font_hover_color", TEXT_PRIMARY)
+	picker.add_theme_color_override("font_pressed_color", TEXT_PRIMARY)
+	picker.add_theme_color_override("font_disabled_color", TEXT_MUTED)
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = CARD_BACKGROUND
+	normal.border_color = Color("8b7545")
+	normal.set_border_width_all(1)
+	normal.set_corner_radius_all(6)
+	normal.set_content_margin(SIDE_LEFT, 10.0)
+	normal.set_content_margin(SIDE_RIGHT, 10.0)
+	normal.set_content_margin(SIDE_TOP, 5.0)
+	normal.set_content_margin(SIDE_BOTTOM, 5.0)
+	picker.add_theme_stylebox_override("normal", normal)
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color("353629")
+	hover.border_color = GOLD
+	picker.add_theme_stylebox_override("hover", hover)
+	var pressed := normal.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color("3a3021")
+	pressed.border_color = GOLD
+	pressed.set_border_width_all(2)
+	picker.add_theme_stylebox_override("pressed", pressed)
+	picker.add_theme_stylebox_override("focus", pressed)
+	var popup := picker.get_popup()
+	popup.add_theme_color_override("font_color", TEXT_PRIMARY)
+	popup.add_theme_color_override("font_hover_color", TEXT_PRIMARY)
+	popup.add_theme_color_override("font_disabled_color", TEXT_MUTED)
+	var popup_panel := StyleBoxFlat.new()
+	popup_panel.bg_color = PANEL_BACKGROUND
+	popup_panel.border_color = GOLD
+	popup_panel.set_border_width_all(1)
+	popup_panel.set_corner_radius_all(6)
+	popup_panel.set_content_margin_all(4.0)
+	popup.add_theme_stylebox_override("panel", popup_panel)
+	var popup_hover := StyleBoxFlat.new()
+	popup_hover.bg_color = Color("51432b")
+	popup_hover.set_corner_radius_all(3)
+	popup.add_theme_stylebox_override("hover", popup_hover)
+
+func _style_supplier_button(button: Button, selected: bool) -> void:
+	button.add_theme_font_size_override("font_size", 11)
+	button.add_theme_color_override("font_color", TEXT_PRIMARY)
+	button.add_theme_color_override("font_hover_color", Color("211b12"))
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color("51432b") if selected else Color("30352c")
+	normal.border_color = GOLD if selected else Color("666047")
+	normal.set_border_width_all(2 if selected else 1)
+	normal.set_corner_radius_all(5)
+	normal.set_content_margin_all(6.0)
+	button.add_theme_stylebox_override("normal", normal)
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color("d5b56d")
+	hover.border_color = Color("fff0c7")
+	button.add_theme_stylebox_override("hover", hover)
+
+func _emit_supplier_selected(supplier_id: String) -> void:
+	supplier_selected.emit(supplier_id)
 
 func _make_book_cover(book: Dictionary) -> Control:
 	var texture: Texture2D = book.get("cover_texture")

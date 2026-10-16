@@ -1,4 +1,11 @@
-res://scripts/book_catalog.gd
-res://scripts/main_game.gd
 res://scripts/customer.gd
+res://scripts/main_game.gd
+res://scripts/notification_panel.gd
+res://scripts/mood_timer.gd
+res://scripts/book_catalog.gd
+res://scripts/inventory.gd
+res://scripts/inventory_screen.gd
+res://scripts/merchant_screen.gd
+res://scripts/customer_profile_panel.gd
+res://scripts/day_manager.gd
 res://scripts/day_summary_screen.gd

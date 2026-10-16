@@ -14,6 +14,21 @@ const BOOKS: Array[Dictionary] = [
 	{"id": "reino_vidro", "title": "O Reino de Vidro", "author": "N. Faria", "sale_price": 13, "buy_price": 10, "description": "Fabulas luminosas de um palacio fragil.", "tags": ["poesia", "mitologia", "cronicas", "rituais"], "cover_color": Color("604b78"), "cover_texture": preload("res://bookimg/reino_vidro.png")}
 ]
 
+const CONDITIONS := {
+	"novo": {"label": "Novo", "buy_multiplier": 1.0, "sale_multiplier": 1.0},
+	"usado": {"label": "Usado", "buy_multiplier": 0.75, "sale_multiplier": 0.8},
+	"danificado": {"label": "Danificado", "buy_multiplier": 0.4, "sale_multiplier": 0.5},
+	"raro": {"label": "Raro", "buy_multiplier": 1.6, "sale_multiplier": 1.8}
+}
+
+static func get_condition(condition_id: String) -> Dictionary:
+	return CONDITIONS.get(condition_id, CONDITIONS["novo"]).duplicate(true)
+
+static func price_for_condition(book: Dictionary, condition_id: String, price_key: String) -> int:
+	var condition := get_condition(condition_id)
+	var multiplier_key := "buy_multiplier" if price_key == "buy_price" else "sale_multiplier"
+	return maxi(1, roundi(float(book.get(price_key, 1)) * float(condition.get(multiplier_key, 1.0))))
+
 static func get_book(book_id: String) -> Dictionary:
 	for book in BOOKS:
 		if book.id == book_id:

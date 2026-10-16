@@ -13,13 +13,11 @@ const GREEN := Color("9eb77a")
 
 var customer: Customer
 var profile: Dictionary = {}
-var requested_book: Dictionary = {}
 
 
-func setup(value_customer: Customer, value_profile: Dictionary, value_requested_book: Dictionary) -> void:
+func setup(value_customer: Customer, value_profile: Dictionary) -> void:
 	customer = value_customer
 	profile = value_profile
-	requested_book = value_requested_book
 	_build()
 
 
@@ -68,32 +66,102 @@ func _build() -> void:
 	name_layout.add_theme_constant_override("separation", 3)
 	name_card.add_child(name_layout)
 	name_layout.add_child(_make_label(str(profile.get("name", customer.customer_name)), 19, TEXT_PRIMARY))
-	name_layout.add_child(_make_label("CLIENTE ATUAL  •  %s" % str(profile.get("greeting", "")), 11, GREEN))
+	name_layout.add_child(_make_label("CLIENTE ATUAL", 11, GREEN))
 
-	if not requested_book.is_empty():
-		var request := _make_label("PEDIU:  %s" % str(requested_book.get("title", "Livro")), 13, GOLD)
-		request.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		layout.add_child(request)
+	if not customer.get_request_clue().is_empty():
+		layout.add_child(_make_requested_book_card())
+	layout.add_child(_make_condition_preference_card())
 
-	var separator := HSeparator.new()
-	separator.add_theme_color_override("separator", Color("6e5b37"))
-	layout.add_child(separator)
+	layout.add_child(_make_label("GOSTA DE", 11, GOLD))
+	var tags := HFlowContainer.new()
+	tags.add_theme_constant_override("h_separation", 6)
+	tags.add_theme_constant_override("v_separation", 5)
+	for tag in profile.get("preference_tags", []):
+		tags.add_child(_make_tag_chip(_preference_name(str(tag))))
+	layout.add_child(tags)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	layout.add_child(scroll)
-	var sections := VBoxContainer.new()
-	sections.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sections.add_theme_constant_override("separation", 12)
-	scroll.add_child(sections)
-	sections.add_child(_make_section("PERSONALIDADE", str(profile.get("personality", "Ainda não conhecemos bem este cliente."))))
-	sections.add_child(_make_section("HISTÓRICO", str(profile.get("history", "Nenhum registro disponível."))))
-	sections.add_child(_make_section("PREFERÊNCIAS", str(profile.get("preferences", "Observe o pedido e descubra seus gostos."))))
+	var details := VBoxContainer.new()
+	details.add_theme_constant_override("separation", 8)
+	details.visible = false
+	layout.add_child(details)
+	details.add_child(_make_section("JEITO DE SER", str(profile.get("personality", "Ainda não conhecemos bem este cliente."))))
+	details.add_child(_make_section("SUA HISTÓRIA", str(profile.get("history", "Nenhum registro disponível."))))
+	var more := Button.new()
+	more.text = "VER MAIS SOBRE O CLIENTE  +"
+	more.custom_minimum_size.y = 34
+	_style_button(more, false)
+	more.pressed.connect(func() -> void:
+		details.visible = not details.visible
+		more.text = "VER MENOS  −" if details.visible else "VER MAIS SOBRE O CLIENTE  +"
+	)
+	layout.add_child(more)
 
-	var hint := _make_label("Use estas pistas para escolher entre entregar, negociar ou oferecer outro livro.", 11, TEXT_MUTED)
+	var hint := _make_label("Escolha uma leitura que combine com o perfil.", 11, TEXT_MUTED)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(hint)
+
+
+func _make_requested_book_card() -> Control:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color("3a3021"), GOLD_SOFT, 1, 8, 7))
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 4)
+	card.add_child(info)
+	var clue: Dictionary = customer.get_request_clue()
+	var clue_type := str(clue.get("type", "titulo")).to_upper()
+	info.add_child(_make_label("PISTA DO PEDIDO · %s" % clue_type, 11, GOLD))
+	var clue_text := _make_label(str(clue.get("text", "O cliente ainda não descreveu o livro.")), 14, TEXT_PRIMARY)
+	clue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_child(clue_text)
+	return card
+
+
+func _make_condition_preference_card() -> Control:
+	var condition := str(profile.get("preferred_condition", "novo"))
+	var condition_label := "NOVO"
+	var badge_background := Color("536b42")
+	var badge_border := Color("a5bd79")
+	match condition:
+		"usado":
+			condition_label = "USADO"
+			badge_background = Color("80551f")
+			badge_border = Color("e2b65a")
+		"raro":
+			condition_label = "RARO"
+			badge_background = Color("604477")
+			badge_border = Color("c7a1e2")
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color("30382d"), Color("8e7543"), 1, 8, 7))
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 3)
+	card.add_child(info)
+	info.add_child(_make_label("CONDIÇÃO PREFERIDA", 10, GOLD))
+	var detail := HBoxContainer.new()
+	detail.add_theme_constant_override("separation", 8)
+	info.add_child(detail)
+	var badge := PanelContainer.new()
+	badge.add_theme_stylebox_override("panel", _make_panel_style(badge_background, badge_border, 1, 6, 5))
+	badge.add_child(_make_label(condition_label, 12, Color("fff4dc")))
+	detail.add_child(badge)
+	return card
+
+
+func _make_tag_chip(value: String) -> Control:
+	var chip := PanelContainer.new()
+	chip.add_theme_stylebox_override("panel", _make_panel_style(Color("30382d"), Color("666047"), 1, 6, 10))
+	chip.add_child(_make_label(value, 11, GREEN))
+	return chip
+
+
+func _preference_name(tag: String) -> String:
+	var names := {
+		"natureza": "Natureza", "poesia": "Poesia", "mitologia": "Mitologia",
+		"magia": "Magia", "aventura": "Aventura", "diagramas": "Diagramas",
+		"cronicas": "Crônicas", "historia": "História", "mapas": "Mapas",
+		"viagem": "Viagem", "engenharia": "Engenharia", "batalhas": "Batalhas",
+		"alquimia": "Alquimia", "rituais": "Rituais", "criaturas": "Criaturas"
+	}
+	return str(names.get(tag, tag.capitalize()))
 
 
 func _make_section(title: String, body: String) -> Control:

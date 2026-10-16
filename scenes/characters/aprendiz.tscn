@@ -18,17 +18,17 @@ shader = ExtResource("4")
 position = Vector2(0, 16)
 script = ExtResource("1")
 customer_name = "Tom, o aprendiz"
-portrait_scale = Vector2(0.636, 0.636)
+portrait_scale = Vector2(0.59625, 0.59625)
 
 [node name="PortraitShadow" type="Sprite2D" parent="."]
 position = Vector2(6, 8)
-scale = Vector2(0.636, 0.636)
+scale = Vector2(0.59625, 0.59625)
 texture = ExtResource("2")
 material = SubResource("ShadowMaterial")
 
 [node name="Portrait" type="Sprite2D" parent="."]
 position = Vector2(0, -4)
-scale = Vector2(0.636, 0.636)
+scale = Vector2(0.59625, 0.59625)
 texture = ExtResource("2")
 material = SubResource("AtmosphereMaterial")
 

@@ -221,9 +221,3 @@ theme_override_colors/font_color = Color(0.929412, 0.823529, 0.603922, 1)
 text = "Dia 1 | Moedas: 0 | Reputacao: 0"
 vertical_alignment = 1
 
-[node name="ShopButton" type="Button" parent="UI" unique_id=938422014]
-offset_left = 1090.0
-offset_top = 96.0
-offset_right = 1246.0
-offset_bottom = 140.0
-text = "SHOP"

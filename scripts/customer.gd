@@ -12,6 +12,9 @@ var served := false
 var profile_data: Dictionary = {}
 var reputation_band := "regular"
 var declined_alternate_offers := 0
+var request_mode := "titulo"
+var request_clue: Dictionary = {}
+var acceptable_book_ids: Array[String] = []
 @onready var portrait: Sprite2D = get_node_or_null("Portrait") as Sprite2D
 @onready var fallback_art: Array[CanvasItem] = [get_node_or_null("Body") as CanvasItem, get_node_or_null("Head") as CanvasItem, get_node_or_null("Hair") as CanvasItem, get_node_or_null("Collar") as CanvasItem]
 
@@ -42,7 +45,7 @@ func configure(profile: Dictionary, requested_book: Dictionary, current_reputati
 	customer_name = str(profile.get("name", "Cliente"))
 	requested_book_id = str(requested_book.get("id", ""))
 	reputation_band = "low" if current_reputation < -2 else ("high" if current_reputation >= 3 else "regular")
-	request_text = str(REQUESTS.get(str(profile.get("id", "")), "Olá. Estou procurando %s.")) % str(requested_book.get("title", "um livro"))
+	_request_clue_for_book(requested_book)
 	if reputation_band == "high":
 		request_text = "Que bom voltar a esta livraria. " + request_text
 	elif reputation_band == "low":
@@ -56,6 +59,59 @@ func configure(profile: Dictionary, requested_book: Dictionary, current_reputati
 
 func get_profile() -> Dictionary:
 	return profile_data.duplicate(true)
+
+func get_request_clue() -> Dictionary:
+	return request_clue.duplicate(true)
+
+func can_accept_book(book_id: String) -> bool:
+	return acceptable_book_ids.has(book_id)
+
+func _request_clue_for_book(book: Dictionary) -> void:
+	acceptable_book_ids.clear()
+	request_mode = "titulo"
+	if randf() < 0.7:
+		request_mode = ["autor", "genero", "caracteristica"].pick_random()
+	var target_id := str(book.get("id", ""))
+	var target_author := str(book.get("author", ""))
+	var target_tags: Array = book.get("tags", [])
+	var clue_tag := str(target_tags.pick_random()) if not target_tags.is_empty() else "aventura"
+	var tag_name := _tag_label(clue_tag)
+	match request_mode:
+		"autor":
+			request_text = "Procuro uma obra de %s, mas o título me escapou." % target_author
+			request_clue = {"type": "autor", "text": request_text, "attribute": target_author}
+		"genero":
+			request_text = "Estou buscando um livro de %s. Você consegue me ajudar a encontrá-lo?" % tag_name
+			request_clue = {"type": "genero", "text": request_text, "attribute": clue_tag}
+		"caracteristica":
+			request_text = "Queria uma leitura com %s. Não lembro o nome do livro." % tag_name
+			request_clue = {"type": "caracteristica", "text": request_text, "attribute": clue_tag}
+		_:
+			request_text = str(REQUESTS.get(str(profile_data.get("id", "")), "Olá. Estou procurando %s.")) % str(book.get("title", "um livro"))
+			request_clue = {"type": "titulo", "text": request_text, "attribute": str(book.get("title", ""))}
+	for candidate in BookCatalog.all_books():
+		var matches_clue := false
+		match request_mode:
+			"autor": matches_clue = str(candidate.get("author", "")) == target_author
+			"genero", "caracteristica": matches_clue = candidate.get("tags", []).has(clue_tag)
+			_: matches_clue = str(candidate.get("id", "")) == target_id
+		if matches_clue:
+			acceptable_book_ids.append(str(candidate.get("id", "")))
+
+func _tag_label(tag: String) -> String:
+	var labels := {
+		"natureza": "temas ligados à natureza", "poesia": "poesia", "mitologia": "mitologia",
+		"magia": "magia", "aventura": "aventuras", "diagramas": "diagramas e esquemas",
+		"cronicas": "crônicas e relatos", "historia": "história", "mapas": "mapas",
+		"viagem": "viagens", "engenharia": "engenharia", "batalhas": "batalhas antigas",
+		"alquimia": "alquimia", "rituais": "rituais arcanos", "criaturas": "criaturas encantadas"
+	}
+	return str(labels.get(tag, tag))
+
+func _not_a_match_text() -> String:
+	if request_mode == "titulo":
+		return _line(1, requested_book_id)
+	return "Esse exemplar não corresponde à pista. " + request_text
 
 func _set_portrait(path: String) -> void:
 	var portrait_texture: Texture2D = portrait.texture if portrait != null else null
@@ -92,21 +148,50 @@ func _line(index: int, book_id: String) -> String:
 		return "Ainda estou um pouco desconfiado. " + result
 	return result
 
+func _condition_rejection(book: Dictionary, count_as_offer := false) -> Dictionary:
+	var preferred_condition := str(profile_data.get("preferred_condition", "novo"))
+	var offered_condition := str(book.get("condition", "novo"))
+	if offered_condition == preferred_condition:
+		return {}
+	var condition_names := {"novo": "novos", "usado": "usados", "danificado": "danificados", "raro": "raros"}
+	var preferred_label := str(condition_names.get(preferred_condition, preferred_condition))
+	var offered_label := str(condition_names.get(offered_condition, offered_condition))
+	var response := "Agradeço, mas prefiro exemplares %s. Não gosto de livros %s." % [preferred_label, offered_label]
+	var completed := false
+	var reputation_change := 0
+	if count_as_offer:
+		declined_alternate_offers += 1
+		completed = declined_alternate_offers >= MAX_DECLINED_ALTERNATE_OFFERS
+		if completed:
+			served = true
+			reputation_change = -1
+			response += " Vou continuar procurando em outra livraria."
+	return {"accepted": false, "completed": completed, "text": response, "money": 0, "reputation": reputation_change}
+
 func deliver(book: Dictionary) -> Dictionary:
-	if book.id == requested_book_id:
+	var condition_result := _condition_rejection(book)
+	if not condition_result.is_empty():
+		return condition_result
+	if can_accept_book(str(book.get("id", ""))):
 		served = true
 		return {"accepted": true, "text": _line(0, book.id), "money": int(book.sale_price), "reputation": 1}
-	return {"accepted": false, "text": _line(1, requested_book_id), "money": 0, "reputation": -1}
+	return {"accepted": false, "text": _not_a_match_text(), "money": 0, "reputation": -1}
 
 func negotiate(book: Dictionary) -> Dictionary:
-	if book.id != requested_book_id:
-		return {"accepted": false, "text": _line(1, requested_book_id), "money": 0, "reputation": 0}
+	var condition_result := _condition_rejection(book)
+	if not condition_result.is_empty():
+		return condition_result
+	if not can_accept_book(str(book.get("id", ""))):
+		return {"accepted": false, "text": _not_a_match_text(), "money": 0, "reputation": 0}
 	served = true
 	var negotiated_price: int = int(book.sale_price) + max(1, ceili(float(book.sale_price) * 0.25))
 	return {"accepted": true, "text": _line(2, book.id), "money": negotiated_price, "reputation": 1}
 
 func react_to_offer(book: Dictionary) -> Dictionary:
-	if book.id == requested_book_id:
+	var condition_result := _condition_rejection(book, true)
+	if not condition_result.is_empty():
+		return condition_result
+	if can_accept_book(str(book.get("id", ""))):
 		return deliver(book)
 	if randf() < 0.45:
 		served = true
@@ -114,5 +199,7 @@ func react_to_offer(book: Dictionary) -> Dictionary:
 	declined_alternate_offers += 1
 	if declined_alternate_offers >= MAX_DECLINED_ALTERNATE_OFFERS:
 		served = true
-		return {"accepted": false, "completed": true, "text": _line(4, requested_book_id) + " Vou voltar quando o livro estiver disponivel.", "money": 0, "reputation": 0}
-	return {"accepted": false, "completed": false, "text": _line(4, requested_book_id), "money": 0, "reputation": 0}
+		var farewell := _line(4, requested_book_id) if request_mode == "titulo" else _not_a_match_text()
+		return {"accepted": false, "completed": true, "text": farewell + " Vou voltar quando o livro estiver disponivel.", "money": 0, "reputation": -1}
+	var response := _line(4, requested_book_id) if request_mode == "titulo" else _not_a_match_text()
+	return {"accepted": false, "completed": false, "text": response, "money": 0, "reputation": 0}
