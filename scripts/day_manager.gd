@@ -19,8 +19,8 @@ var waiting_for_end_notice := false
 var store_is_open := false
 
 func start_day(customer_limit := MAX_CUSTOMERS) -> void:
-	var maximum_customers := clampi(customer_limit, MIN_CUSTOMERS, MAX_CUSTOMERS)
-	customers_today = randi_range(MIN_CUSTOMERS, maximum_customers)
+	var maximum_customers := clampi(customer_limit, 1, MAX_CUSTOMERS)
+	customers_today = randi_range(mini(MIN_CUSTOMERS, maximum_customers), maximum_customers)
 	served_today = 0
 	waiting_for_next = false
 	waiting_for_end_notice = false

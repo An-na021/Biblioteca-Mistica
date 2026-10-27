@@ -4,6 +4,7 @@ extends Control
 signal next_day_requested
 signal shop_requested
 signal district_requested
+signal livraria_requested
 
 class CartButton extends Button:
 	func _draw() -> void:
@@ -25,10 +26,10 @@ const MUTED := Color("b9ad96")
 const GREEN := Color("a8c184")
 const RED := Color("d99079")
 
-func setup(day: int, customers_served: int, sales_count: int, sales_revenue: int, errors: int, reputation: int, reputation_change: int, profit: int, customers_total: int, progress_report: Dictionary = {}, district_name := "Centro") -> void:
-	build(day, customers_served, sales_count, sales_revenue, errors, reputation, reputation_change, profit, customers_total, progress_report, district_name)
+func setup(day: int, customers_served: int, sales_count: int, sales_revenue: int, errors: int, reputation: int, reputation_change: int, profit: int, customers_total: int, progress_report: Dictionary = {}, district_name := "Centro", mistakes := 0, world_note := "") -> void:
+	build(day, customers_served, sales_count, sales_revenue, errors, reputation, reputation_change, profit, customers_total, progress_report, district_name, mistakes, world_note)
 
-func build(day: int, customers_served: int, sales_count: int, sales_revenue: int, errors: int, reputation: int, reputation_change: int, profit: int, customers_total: int, progress_report: Dictionary = {}, district_name := "Centro") -> void:
+func build(day: int, customers_served: int, sales_count: int, sales_revenue: int, errors: int, reputation: int, reputation_change: int, profit: int, customers_total: int, progress_report: Dictionary = {}, district_name := "Centro", mistakes := 0, world_note := "") -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
@@ -49,7 +50,7 @@ func build(day: int, customers_served: int, sales_count: int, sales_revenue: int
 	center.add_child(panel)
 
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 14)
+	layout.add_theme_constant_override("separation", 10)
 	panel.add_child(layout)
 
 	var header := HBoxContainer.new()
@@ -60,7 +61,7 @@ func build(day: int, customers_served: int, sales_count: int, sales_revenue: int
 	title_stack.add_theme_constant_override("separation", 3)
 	header.add_child(title_stack)
 	title_stack.add_child(_label("FECHAMENTO DO DIA", 23, GOLD))
-	title_stack.add_child(_label("Dia %d  ·  %d de %d clientes atendidos" % [day, customers_served, customers_total], 13, MUTED))
+	title_stack.add_child(_label("Dia %d  ·  %d de %d clientes atendidos  ·  %d erro(s)" % [day, customers_served, customers_total, mistakes], 13, MUTED))
 	header.add_child(_badge(district_name.to_upper(), Color("3a3021"), GOLD))
 
 	var separator := ColorRect.new()
@@ -102,6 +103,8 @@ func build(day: int, customers_served: int, sales_count: int, sales_revenue: int
 	var achievement_line := _label(achievement_text, 10, GOLD)
 	achievement_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(achievement_line)
+	if not world_note.is_empty():
+		layout.add_child(_label(world_note, 12, GOLD))
 
 	var footer := HBoxContainer.new()
 	footer.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -119,6 +122,12 @@ func build(day: int, customers_served: int, sales_count: int, sales_revenue: int
 	_style_button(districts)
 	districts.pressed.connect(func() -> void: district_requested.emit())
 	footer.add_child(districts)
+	var livraria := Button.new()
+	livraria.text = "LIVRARIA"
+	livraria.custom_minimum_size = Vector2(130, 44)
+	_style_button(livraria)
+	livraria.pressed.connect(func() -> void: livraria_requested.emit())
+	footer.add_child(livraria)
 	var next_day := Button.new()
 	next_day.text = "ABRIR O PRÓXIMO DIA"
 	next_day.custom_minimum_size = Vector2(250, 44)

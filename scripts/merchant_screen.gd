@@ -52,8 +52,11 @@ func build() -> void:
 	add_child(shade)
 
 	var panel := PanelContainer.new()
-	panel.position = Vector2(100, 35)
-	panel.size = Vector2(1080, 650)
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -540.0
+	panel.offset_top = -325.0
+	panel.offset_right = 540.0
+	panel.offset_bottom = 325.0
 	panel.add_theme_stylebox_override("panel", _make_panel_style(PANEL_BACKGROUND, GOLD, 2, 18))
 	add_child(panel)
 

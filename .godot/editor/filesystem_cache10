@@ -1,5 +1,5 @@
 78098b89c88a74ebe8c20117b8754620
-::res://::1792156064
+::res://::1793106429
 icon.svg::CompressedTexture2D::5473069714492834225::1791497625::1791500133::1::::<><><>0<>0<>dd473c37ac427e00a85e8017f4f13148<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
 README.md::TextFile::-1::1791502262::0::1::::<><><>0<>0<><>::
 ::res://bookimg/::1791566113
@@ -23,7 +23,7 @@ mago_anciao.png::CompressedTexture2D::7216742614114724622::1790531475::179150259
 Professor Bigodes.png::CompressedTexture2D::7402164924906863884::1791999134::1792000100::1::::<><><>0<>0<>cb008c8ac5c77401990385d3229b4333<>res://.godot/imported/Professor Bigodes.png-828c293ac59e51eccff53773d2919cf8.ctex::
 Thalion Grimório.png::CompressedTexture2D::1187333005258057293::1791999106::1792000100::1::::<><><>0<>0<>070f97f4e0c1863676473e9c946c66ae<>res://.godot/imported/Thalion Grimório.png-3a1c430a6a0b34fa03dbd94ac048a69c.ctex::
 ::res://scenes/::1791502198
-main.tscn::PackedScene::2876197167270005196::1792106099::0::1::::<><><>0<>0<><>::uid://lu37kjvuo1m5::::res://scripts/main_game.gd<>uid://bxv11porfccx6::::res://scripts/interactable.gd<>uid://k3xi8s55612f::::res://scripts/dialogue_panel.gd<>uid://0fb2emo0vxdv::::res://IMG/Backgroud.png
+main.tscn::PackedScene::2876197167270005196::1793106597::0::1::::<><><>0<>0<><>::uid://lu37kjvuo1m5::::res://scripts/main_game.gd<>uid://bxv11porfccx6::::res://scripts/interactable.gd<>uid://k3xi8s55612f::::res://scripts/dialogue_panel.gd<>uid://0fb2emo0vxdv::::res://IMG/Backgroud.png
 ::res://scenes/characters/::1792002835
 anao.tscn::PackedScene::-1::1792010700::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/anao_guerreiro.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
 aprendiz.tscn::PackedScene::-1::1792103892::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/jovem_mago.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
@@ -33,21 +33,26 @@ lilith_vespera.tscn::PackedScene::-1::1792083524::0::1::::<><><>0<>0<><>::res://
 mago.tscn::PackedScene::-1::1792104369::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/mago_anciao.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
 professor_bigodes.tscn::PackedScene::-1::1792083524::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/Professor Bigodes.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
 thalion_grimorio.tscn::PackedScene::-1::1792083524::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/Thalion Grimório.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
-::res://scripts/::1792088839
+::res://scripts/::1793107159
 book.gd::GDScript::486993141782667155::1791497627::0::1::::Book<>Interactable<><>0<>0<><>::
-book_catalog.gd::GDScript::6020919062269309548::1792074431::0::1::::BookCatalog<>RefCounted<><>0<>0<><>::
-customer.gd::GDScript::930092272971054051::1792156233::0::1::::Customer<>Interactable<><>0<>0<><>::
-customer_profile_panel.gd::GDScript::2644388741581268849::1792104607::0::1::::CustomerProfilePanel<>Control<><>0<>0<><>::
-day_manager.gd::GDScript::73078135164781612::1791507455::0::1::::DayManager<>RefCounted<><>0<>0<><>::
-day_summary_screen.gd::GDScript::8331424866487560210::1792085385::0::1::::DaySummaryScreen<>Control<><>0<>0<><>::
+book_catalog.gd::GDScript::6020919062269309548::1792168292::0::1::::BookCatalog<>RefCounted<><>0<>0<><>::
+customer.gd::GDScript::930092272971054051::1792174386::0::1::::Customer<>Interactable<><>0<>0<><>::
+customer_profile_panel.gd::GDScript::2644388741581268849::1793107205::0::1::::CustomerProfilePanel<>Control<><>0<>0<><>::
+day_manager.gd::GDScript::73078135164781612::1792179169::0::1::::DayManager<>RefCounted<><>0<>0<><>::
+day_summary_screen.gd::GDScript::8331424866487560210::1793107202::0::1::::DaySummaryScreen<>Control<><>0<>0<><>::
 dialogue_panel.gd::GDScript::761103553160301851::1791497627::0::1::::DialoguePanel<>Control<><>0<>0<><>::
+district_screen.gd::GDScript::7935645219186011896::1792179584::0::1::::DistrictScreen<>Control<><>0<>0<><>::
+game_menu.gd::GDScript::8692957589740439114::1793107058::0::1::::<>CanvasLayer<><>0<>0<><>::
 interactable.gd::GDScript::4045741902913236149::1791567707::0::1::::Interactable<>Area2D<><>0<>0<><>::
-inventory.gd::GDScript::5593779716877303886::1791497627::0::1::::Inventory<>RefCounted<><>0<>0<><>::
-inventory_screen.gd::GDScript::8432068070373816337::1792103756::0::1::::InventoryScreen<>Control<><>0<>0<><>::
+inventory.gd::GDScript::5593779716877303886::1792179310::0::1::::Inventory<>RefCounted<><>0<>0<><>::
+inventory_screen.gd::GDScript::8432068070373816337::1793107139::0::1::::InventoryScreen<>Control<><>0<>0<><>::
 main.gd::GDScript::8996122104514749359::1791497627::0::1::::<>Node2D<><>0<>0<><>::
-main_game.gd::GDScript::815122596420161966::1792156472::0::1::::<>Node2D<><>0<>0<><>::
-merchant_screen.gd::GDScript::7724171913186753593::1792104220::0::1::::MerchantScreen<>Control<><>0<>0<><>::
-notification_panel.gd::GDScript::1724242537035863746::1792156235::0::1::::NotificationPanel<>Control<><>0<>0<><>::
+main_game.gd::GDScript::815122596420161966::1793107200::0::1::::<>Node2D<><>0<>0<><>::
+merchant_screen.gd::GDScript::7724171913186753593::1793107204::0::1::::MerchantScreen<>Control<><>0<>0<><>::
+mood_timer.gd::GDScript::1824476574961350591::1793106593::0::1::::MoodTimer<>Control<><>0<>0<><>::
+notification_panel.gd::GDScript::1724242537035863746::1793106595::0::1::::NotificationPanel<>Control<><>0<>0<><>::
+progression_manager.gd::GDScript::7109599717004551373::1792179483::0::1::::ProgressionManager<>RefCounted<><>0<>0<><>::
+save_game.gd::GDScript::2139788943740260313::1793107060::0::1::::<>RefCounted<><>0<>0<><>::
 ::res://shaders/::1791503034
 customer_atmosphere.gdshader::Shader::1303064365930924988::1791502943::0::1::::<><><>0<>0<><>::
 customer_shadow.gdshader::Shader::825600638396690434::1791502971::0::1::::<><><>0<>0<><>::

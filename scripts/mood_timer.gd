@@ -13,10 +13,11 @@ func _ready() -> void:
 	custom_minimum_size = TIMER_SIZE
 	size = TIMER_SIZE
 	set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	offset_left = -282.0
-	offset_top = 2.0
-	offset_right = -106.0
-	offset_bottom = 178.0
+	# Keep the medallion below the status panel (which ends at y = 84).
+	offset_left = -210.0
+	offset_top = 100.0
+	offset_right = -34.0
+	offset_bottom = 276.0
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	queue_redraw()
 

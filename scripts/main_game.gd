@@ -3,6 +3,13 @@ extends Node2D
 const MoodTimerUI = preload("res://scripts/mood_timer.gd")
 const Progression = preload("res://scripts/progression_manager.gd")
 const DistrictPickerUI = preload("res://scripts/district_screen.gd")
+const GameMenuUI = preload("res://scripts/game_menu.gd")
+const SaveGame = preload("res://scripts/save_game.gd")
+const World = preload("res://scripts/shop_world.gd")
+const NegotiationUI = preload("res://scripts/negotiation_screen.gd")
+const LivrariaUI = preload("res://scripts/livraria_screen.gd")
+const ShopDecorUI = preload("res://scripts/shop_decor.gd")
+const CatalogAPI = preload("res://scripts/catalog_api.gd")
 
 const CUSTOMER_PROFILES: Array[Dictionary] = [
 	{
@@ -102,13 +109,6 @@ const CUSTOMER_PROFILES: Array[Dictionary] = [
 		"preferred_condition": "novo"
 	}
 ]
-const MOOD_PATIENCE_SECONDS := {
-	"apressado": 60.0,
-	"indeciso": 60.0,
-	"colecionador": 60.0,
-	"negociador": 60.0,
-	"dificil": 60.0
-}
 const DISTRICTS: Array[Dictionary] = [
 	{
 		"id": "centro",
@@ -151,6 +151,7 @@ var customer: Customer
 var day_manager := DayManager.new()
 var inventory := Inventory.new()
 var progression = Progression.new()
+var world = World.new()
 var money := 0
 var reputation := 0
 var merchant_offers: Dictionary = {}
@@ -163,15 +164,29 @@ var day_customers_served := 0
 var day_sales_count := 0
 var day_sales_revenue := 0
 var day_errors := 0
+var day_failed_customers := 0
 var day_profit := 0
 var day_start_reputation := 0
 var customer_ids_seen_today: Array[String] = []
 var customer_time_limit := 0.0
 var customer_time_left := 0.0
 var mood_timer: Control
+var game_menu: CanvasLayer
+var relaxed_mode := false
+var summary_report: Dictionary = {}
+var checkpoint: Dictionary = {}
+var save_path := SaveGame.SAVE_PATH
+var shop_decor: Node2D
+var event_label: Label
+var event_title: Label
+var customer_profiles: Array[Dictionary] = CUSTOMER_PROFILES.duplicate(true)
+var supplier_profiles: Array[Dictionary] = SUPPLIERS.duplicate(true)
+var catalog_snapshot: Dictionary = {}
+var api_url := OS.get_environment("BIBLIOTECA_API_URL") if OS.has_environment("BIBLIOTECA_API_URL") else "http://127.0.0.1:8000"
 
 func _ready() -> void:
 	randomize()
+	BookCatalog.reset_catalog()
 	notifications = NotificationPanel.new()
 	$UI.add_child(notifications)
 	for interactable in get_tree().get_nodes_in_group("interactables"): _connect_interactable(interactable)
@@ -182,18 +197,61 @@ func _ready() -> void:
 	day_manager.customer_ready.connect(_on_customer_ready)
 	day_manager.store_closed.connect(_on_store_closed)
 	_validate_customer_data()
-	_reset_day_summary_stats()
-	progression.record_district_visit(current_district_id)
-	dialogue_panel.show_message("Livraria", "A loja esta abrindo. Aguarde a chegada do primeiro cliente.")
-	day_manager.start_day(_current_customer_limit())
+	shop_decor = ShopDecorUI.new()
+	shop_decor.z_index = 1
+	add_child(shop_decor)
+	var event_panel := PanelContainer.new()
+	event_panel.position = Vector2(16, 138)
+	event_panel.custom_minimum_size.x = 650.0
+	event_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var event_style := StyleBoxFlat.new()
+	event_style.bg_color = Color(0.09, 0.075, 0.055, 0.96)
+	event_style.border_color = Color("8e7543")
+	event_style.set_border_width_all(1)
+	event_style.set_corner_radius_all(6)
+	event_style.set_content_margin(SIDE_LEFT, 14.0)
+	event_style.set_content_margin(SIDE_RIGHT, 14.0)
+	event_style.set_content_margin(SIDE_TOP, 10.0)
+	event_style.set_content_margin(SIDE_BOTTOM, 10.0)
+	event_panel.add_theme_stylebox_override("panel", event_style)
+	$UI.add_child(event_panel)
+	var event_content := VBoxContainer.new()
+	event_content.add_theme_constant_override("separation", 5)
+	event_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	event_panel.add_child(event_content)
+	event_title = Label.new()
+	event_title.add_theme_font_size_override("font_size", 16)
+	event_title.add_theme_color_override("font_color", Color("e4c477"))
+	event_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	event_content.add_child(event_title)
+	event_label = Label.new()
+	event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	event_label.add_theme_font_size_override("font_size", 16)
+	event_label.add_theme_color_override("font_color", Color("f3ead6"))
+	event_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	event_content.add_child(event_label)
+	store_is_open = false
+	game_menu = GameMenuUI.new()
+	add_child(game_menu)
+	game_menu.new_game_requested.connect(_start_new_game)
+	game_menu.continue_requested.connect(_continue_game)
+	game_menu.relaxed_changed.connect(_set_relaxed_mode)
+	checkpoint = SaveGame.read_save(save_path)
+	relaxed_mode = bool(checkpoint.get("relaxed_mode", false))
+	game_menu.relaxed.set_pressed_no_signal(relaxed_mode)
+	game_menu.show_start(not checkpoint.is_empty())
 	_update_status()
+	if not api_url.is_empty():
+		_load_api_catalog()
 
 func _process(delta: float) -> void:
 	day_manager.tick(delta)
 	var customer_active := store_is_open and customer != null and is_instance_valid(customer) and customer.visible
 	if mood_timer != null:
-		mood_timer.visible = customer_active
-	if not customer_active or active_overlay is CustomerProfilePanel:
+		mood_timer.visible = customer_active and not relaxed_mode and active_overlay == null
+	if active_overlay is InventoryScreen or active_overlay is NegotiationUI:
+		active_overlay.set_time_left(customer_time_left, relaxed_mode)
+	if not customer_active or relaxed_mode or active_overlay is CustomerProfilePanel:
 		return
 	customer_time_left = maxf(0.0, customer_time_left - delta)
 	mood_timer.call("set_time_left", customer_time_left)
@@ -207,8 +265,10 @@ func _customer_service_timed_out() -> void:
 	customer.set_selected(false)
 	customer.visible = false
 	day_errors += 1
+	day_failed_customers += 1
 	reputation -= 1
 	progression.record_error()
+	world.record_departure(str(customer.profile_data.id))
 	progression.record_reputation(reputation)
 	_notify_new_achievements()
 	if active_overlay != null:
@@ -261,7 +321,7 @@ func _on_customer_ready(index: int, total: int) -> void:
 	var available_profiles: Array[Dictionary] = []
 	var district := _current_district()
 	var district_customer_ids: Array = district.get("customer_ids", [])
-	for candidate in CUSTOMER_PROFILES:
+	for candidate in customer_profiles:
 		var candidate_id := str(candidate.get("id", candidate.get("name", "")))
 		if district_customer_ids.has(candidate_id) and not customer_ids_seen_today.has(candidate_id):
 			available_profiles.append(candidate)
@@ -290,9 +350,25 @@ func _on_customer_ready(index: int, total: int) -> void:
 	if matching_books.is_empty():
 		push_error("O perfil %s nao possui livros compativeis." % str(profile.get("id", profile.get("name", "?"))))
 		return
-	customer.configure(profile, matching_books.pick_random(), reputation)
+	var event_books: Array[Dictionary] = []
+	var event := World.event_for_day(day_manager.day)
+	for book in matching_books:
+		var copy := book.duplicate()
+		copy["condition"] = str(profile.get("preferred_condition", "novo"))
+		if World.event_matches(event, copy):
+			event_books.append(book)
+	if not event_books.is_empty() and randf() < 0.75:
+		matching_books = event_books
+	var customer_id := str(profile.id)
+	var history: Dictionary = world.memory(customer_id)
+	customer.configure(profile, matching_books.pick_random(), reputation, {
+		"memory": history, "story": world.story_text(customer_id),
+		"patience_bonus": world.patience_bonus(), "recommendation_bonus": world.recommendation_bonus(),
+		"negotiation_bonus": world.negotiation_bonus()
+	})
+	world.record_visit(customer_id, day_manager.day)
 	var mood_type := str(profile.get("mood_type", "indeciso"))
-	customer_time_limit = float(MOOD_PATIENCE_SECONDS.get(mood_type, 60.0))
+	customer_time_limit = customer.patience_seconds()
 	customer_time_left = customer_time_limit
 	mood_timer.call("setup", mood_type, customer_time_limit)
 	_connect_interactable(customer)
@@ -303,7 +379,17 @@ func _on_customer_ready(index: int, total: int) -> void:
 func _current_district() -> Dictionary:
 	for district in DISTRICTS:
 		if str(district.get("id", "")) == current_district_id:
-			return district
+			var result := district.duplicate(true)
+			if not catalog_snapshot.is_empty():
+				result["book_ids"] = []
+				result["customer_ids"] = []
+				for book in BookCatalog.all_books():
+					if book.get("district_ids", []).has(current_district_id):
+						result.book_ids.append(str(book.id))
+				for profile in customer_profiles:
+					if profile.get("district_ids", []).has(current_district_id):
+						result.customer_ids.append(str(profile.id))
+			return result
 	return DISTRICTS[0]
 
 func _current_customer_limit() -> int:
@@ -326,15 +412,13 @@ func _notify_new_achievements() -> void:
 
 func _validate_customer_data() -> void:
 	var seen_ids: Dictionary = {}
-	for profile in CUSTOMER_PROFILES:
+	for profile in customer_profiles:
 		var profile_id := str(profile.get("id", ""))
 		if profile_id.is_empty() or seen_ids.has(profile_id):
 			push_error("Perfil de cliente sem identificador unico: %s" % str(profile.get("name", "?")))
 			continue
 		seen_ids[profile_id] = true
-		if not Customer.REQUESTS.has(profile_id) or not Customer.VOICES.has(profile_id):
-			push_error("Faltam falas para o perfil %s." % profile_id)
-		elif str(Customer.REQUESTS[profile_id]).count("%s") != 1:
+		if Customer.REQUESTS.has(profile_id) and str(Customer.REQUESTS[profile_id]).count("%s") != 1:
 			push_error("A fala de pedido do perfil %s precisa de um campo para o titulo." % profile_id)
 		if profile.get("preference_tags", []).is_empty():
 			push_error("O perfil %s nao tem etiquetas de preferencia." % profile_id)
@@ -359,10 +443,10 @@ func _on_store_closed() -> void:
 
 func _prepare_supplier_markets() -> void:
 	supplier_markets.clear()
-	for supplier in SUPPLIERS:
+	for supplier in supplier_profiles:
 		supplier_markets[str(supplier.get("id", ""))] = _make_merchant_offers(supplier)
 	if not supplier_markets.has(selected_supplier_id):
-		selected_supplier_id = "praca"
+		selected_supplier_id = str(supplier_profiles[0].id)
 	merchant_offers = supplier_markets.get(selected_supplier_id, {})
 
 func _make_merchant_offers(supplier: Dictionary) -> Dictionary:
@@ -421,6 +505,23 @@ func _make_merchant_offers(supplier: Dictionary) -> Dictionary:
 			"risk": float(supplier.get("risk", 0.0)),
 			"supplier_id": str(supplier.get("id", ""))
 		}
+	# The town bookseller can source every pending special order, including rarities.
+	if bool(supplier.get("special_orders", str(supplier.get("id", "")) == "praca")):
+		var needed: Dictionary = {}
+		for order in world.pending_orders():
+			var order_id := str(order.book_id)
+			var order_condition := str(order.condition)
+			var key := order_id + ":" + order_condition
+			needed[key] = int(needed.get(key, 0)) + 1
+			var entry: Dictionary = offers.get(order_id, {"quantity": 0, "conditions": {}, "risk": float(supplier.risk), "supplier_id": str(supplier.id)})
+			var conditions: Dictionary = entry.conditions
+			var condition_entry: Dictionary = conditions.get(order_condition, {"quantity": 0})
+			var quantity := maxi(int(condition_entry.quantity), int(needed[key]))
+			entry["quantity"] = int(entry.quantity) + quantity - int(condition_entry.quantity)
+			condition_entry["quantity"] = quantity
+			condition_entry["price"] = BookCatalog.price_for_condition(BookCatalog.get_book(order_id), order_condition, "buy_price")
+			conditions[order_condition] = condition_entry
+			offers[order_id] = entry
 	return offers
 
 func _open_inventory() -> void:
@@ -429,14 +530,16 @@ func _open_inventory() -> void:
 	active_overlay = screen
 	var customer_active := store_is_open and customer != null and customer.visible
 	var request_clue: Dictionary = customer.get_request_clue() if customer_active else {}
-	screen.setup(inventory, request_clue, customer_active)
+	var preference := str(customer.get_profile().get("preferred_condition", "novo")) if customer_active else ""
+	screen.setup(inventory, request_clue, customer_active, preference, customer if customer_active else null)
+	screen.set_time_left(customer_time_left, relaxed_mode)
 	screen.deliver_requested.connect(func(book_id: String, condition: String) -> void: _handle_stock_action(book_id, condition, "deliver", screen))
-	screen.negotiate_requested.connect(func(book_id: String, condition: String) -> void: _handle_stock_action(book_id, condition, "negotiate", screen))
+	screen.negotiate_requested.connect(func(book_id: String, condition: String) -> void: _open_negotiation(book_id, condition, screen))
 	screen.offer_requested.connect(func(book_id: String, condition: String) -> void: _handle_stock_action(book_id, condition, "offer", screen))
 	screen.closed.connect(func() -> void: active_overlay = null; screen.queue_free())
 
 func _handle_stock_action(book_id: String, condition: String, action: String, screen: InventoryScreen) -> void:
-	if not store_is_open or not customer.visible or inventory.get_condition_quantity(book_id, condition) <= 0:
+	if active_overlay != screen or not store_is_open or not customer.visible or inventory.get_condition_quantity(book_id, condition) <= 0:
 		return
 	var book := BookCatalog.get_book(book_id)
 	book["condition"] = condition
@@ -448,9 +551,15 @@ func _handle_stock_action(book_id: String, condition: String, action: String, sc
 		"deliver": result = customer.deliver(book)
 		"negotiate": result = customer.negotiate(book)
 		"offer": result = customer.react_to_offer(book)
+	_complete_stock_action(book, result, screen)
+
+func _complete_stock_action(book: Dictionary, result: Dictionary, screen: Control) -> void:
+	var book_id := str(book.id)
+	var condition := str(book.condition)
 	var reputation_delta: int = int(result.get("reputation", 0))
-	if not bool(result.get("accepted", false)):
+	if not bool(result.get("accepted", false)) and bool(result.get("counts_as_error", true)):
 		progression.record_error()
+		day_errors += 1
 	if reputation_delta != 0:
 		reputation += reputation_delta
 		progression.record_reputation(reputation)
@@ -458,21 +567,36 @@ func _handle_stock_action(book_id: String, condition: String, action: String, sc
 		var acquisition_cost := inventory.get_unit_cost(book_id, condition)
 		inventory.remove(book_id, 1, condition)
 		var sale_amount := int(result.money)
+		var event_bonus := World.event_bonus(day_manager.day, book)
+		sale_amount += event_bonus
 		money += sale_amount
 		day_customers_served += 1
 		day_sales_count += 1
 		day_sales_revenue += sale_amount
 		day_profit += sale_amount - acquisition_cost
 		progression.record_sale(sale_amount - acquisition_cost)
+		var chapter: Dictionary = world.record_purchase(str(customer.profile_data.id), book_id, condition)
+		money += int(chapter.reward)
+		if int(chapter.story_reward) > 0:
+			_notify("HISTÓRIA CONCLUÍDA · +%d MOEDAS" % int(chapter.story_reward), str(chapter.text), "success")
+		elif int(world.memory(str(customer.profile_data.id)).get("purchases", 0)) <= 3:
+			_notify("CADERNO DE LEITORES · %d/3" % int(chapter.chapter), str(chapter.text), "info")
+		if int(chapter.order_reward) > 0:
+			_notify("ENCOMENDA ENTREGUE", "+4 moedas de agradecimento. O leitor recebeu o exemplar que reservou.", "success")
+		if int(world.memory(str(customer.profile_data.id)).get("purchases", 0)) == 1:
+			_create_customer_order(book_id)
+		if event_bonus > 0:
+			_notify("BÔNUS DO EVENTO", "+%d moedas · %s" % [event_bonus, str(World.event_for_day(day_manager.day).name)], "success")
 		_notify_new_achievements()
-		_notify("VENDA CONCLUIDA", "%s por %d moedas." % [str(book.get("title", "Livro")), int(result.money)], "success")
+		_notify("VENDA CONCLUIDA", "%s por %d moedas." % [str(book.get("title", "Livro")), sale_amount], "success")
 		if inventory.get_quantity(book_id) == 0:
 			_notify("ESTOQUE ESGOTADO", "%s acabou do estoque." % str(book.get("title", "Livro")), "warning")
 		customer.set_selected(false)
 		customer.visible = false
 		day_manager.customer_completed()
 	elif bool(result.get("completed", false)):
-		day_errors += 1
+		world.record_departure(str(customer.profile_data.id))
+		day_failed_customers += 1
 		_notify("CLIENTE FOI EMBORA", "O cliente encerrou o atendimento sem comprar.", "warning")
 		customer.set_selected(false)
 		customer.visible = false
@@ -492,17 +616,21 @@ func _handle_stock_action(book_id: String, condition: String, action: String, sc
 func _show_shop(summary: DaySummaryScreen = null) -> void:
 	if active_overlay != null and active_overlay != summary: return
 	if supplier_markets.is_empty(): _prepare_supplier_markets()
+	if not store_is_open:
+		_save_checkpoint()
 	merchant_offers = supplier_markets.get(selected_supplier_id, {})
 	if summary != null:
 		summary.visible = false
 	var screen := MerchantScreen.new()
 	$UI.add_child(screen)
 	active_overlay = screen
-	screen.setup(inventory, merchant_offers, money, summary != null or not store_is_open, SUPPLIERS, selected_supplier_id)
+	screen.setup(inventory, merchant_offers, money, summary != null or not store_is_open, supplier_profiles, selected_supplier_id)
 	screen.supplier_selected.connect(func(supplier_id: String) -> void:
 		selected_supplier_id = supplier_id
 		merchant_offers = supplier_markets.get(selected_supplier_id, {})
 		screen.set_market(merchant_offers, selected_supplier_id, money)
+		if not store_is_open:
+			_save_checkpoint()
 	)
 	screen.purchase_requested.connect(func(book_id: String, condition: String) -> void:
 		var book := BookCatalog.get_book(book_id)
@@ -527,6 +655,7 @@ func _show_shop(summary: DaySummaryScreen = null) -> void:
 		_notify_new_achievements()
 		_update_status()
 		screen.refresh(money)
+		_save_checkpoint()
 	)
 	screen.closed.connect(func() -> void:
 		active_overlay = summary
@@ -573,8 +702,10 @@ func _close_store(customer_inside: bool) -> void:
 	store_is_open = false
 	day_manager.close_store()
 	if customer_inside:
+		world.record_departure(str(customer.profile_data.id))
 		reputation -= 1
 		day_errors += 1
+		day_failed_customers += 1
 		progression.record_error()
 		progression.record_reputation(reputation)
 		_notify_new_achievements()
@@ -588,11 +719,13 @@ func _close_store(customer_inside: bool) -> void:
 	_update_status()
 	_present_day_summary()
 
-func _present_day_summary() -> void:
+func _present_day_summary(restored := false) -> void:
 	if active_overlay != null:
 		return
-	var progress_report: Dictionary = progression.finish_day()
-	var reward := int(progress_report.get("reward", 0))
+	if not restored:
+		summary_report = progression.finish_day()
+	var progress_report := summary_report
+	var reward := 0 if restored else int(progress_report.get("reward", 0))
 	if reward > 0:
 		money += reward
 		_notify("RECOMPENSA DE OBJETIVOS", "+%d moedas" % reward, "success")
@@ -604,24 +737,29 @@ func _present_day_summary() -> void:
 	var reputation_change := reputation - day_start_reputation
 	summary.shop_requested.connect(func() -> void: _show_shop(summary))
 	summary.district_requested.connect(func() -> void: _show_districts(summary))
+	summary.livraria_requested.connect(func() -> void: _show_livraria(summary))
 	summary.setup(
 		day_manager.day,
 		day_customers_served,
 		day_sales_count,
 		day_sales_revenue,
-		day_errors,
+		day_failed_customers,
 		reputation,
 		reputation_change,
 		day_profit,
 		day_manager.customers_today,
 		progress_report,
-		str(_current_district().get("name", "Centro Antigo"))
+		str(_current_district().get("name", "Centro Antigo")),
+		day_errors,
+		"Amanhã: " + str(World.event_for_day(day_manager.day + 1).name)
 	)
 	summary.next_day_requested.connect(func() -> void:
 		active_overlay = null
 		summary.queue_free()
 		_finish_day()
 	)
+	if not restored:
+		_save_checkpoint()
 
 func _show_districts(summary: DaySummaryScreen) -> void:
 	if active_overlay != summary:
@@ -643,6 +781,7 @@ func _show_districts(summary: DaySummaryScreen) -> void:
 		picker.queue_free()
 		_update_status()
 		_notify("BAIRRO SELECIONADO", str(_current_district().get("name", "")) + " será sua próxima região de atendimento.", "info")
+		_save_checkpoint()
 	)
 	picker.closed.connect(func() -> void:
 		active_overlay = summary
@@ -654,18 +793,246 @@ func _finish_day() -> void:
 	customer_ids_seen_today.clear()
 	supplier_markets.clear()
 	merchant_offers.clear()
-	day_manager.finish_day(_current_customer_limit())
-	store_is_open = true
-	_reset_day_summary_stats()
-	_update_status()
+	day_manager.day += 1
+	_begin_day()
 
 func _reset_day_summary_stats() -> void:
 	day_customers_served = 0
 	day_sales_count = 0
 	day_sales_revenue = 0
 	day_errors = 0
+	day_failed_customers = 0
 	day_profit = 0
 	day_start_reputation = reputation
 
 func _update_status() -> void:
 	status_label.text = "Dia %d | Moedas: %d | Reputacao: %d" % [day_manager.day, money, reputation]
+
+func _start_new_game() -> void:
+	inventory = Inventory.new()
+	progression = Progression.new()
+	world = World.new()
+	money = 0
+	reputation = 0
+	day_manager.day = 1
+	current_district_id = "centro"
+	selected_supplier_id = "praca"
+	progression.record_district_visit(current_district_id)
+	game_menu.enter_game()
+	_begin_day()
+
+func _begin_day() -> void:
+	customer_ids_seen_today.clear()
+	supplier_markets.clear()
+	merchant_offers.clear()
+	summary_report.clear()
+	store_is_open = true
+	_reset_day_summary_stats()
+	progression.begin_day(day_manager.day, _current_customer_limit())
+	_update_world_visuals()
+	# Snapshot before spawning: Continue restarts this day with its opening stock.
+	_save_checkpoint()
+	day_manager.start_day(_current_customer_limit())
+	_update_status()
+
+func _continue_game() -> void:
+	var data := SaveGame.read_save(save_path)
+	if data.is_empty():
+		game_menu.note.text = "Não foi possível ler o progresso. Você pode iniciar um novo jogo."
+		return
+	if data.get("catalog", {}).is_empty():
+		# Legacy games used the built-in catalog; preserve their books and orders.
+		BookCatalog.reset_catalog()
+		customer_profiles = CUSTOMER_PROFILES.duplicate(true)
+		supplier_profiles = SUPPLIERS.duplicate(true)
+		catalog_snapshot.clear()
+	elif not _apply_catalog(data.catalog):
+		game_menu.note.text = "O catálogo desta partida está inválido. Não foi possível continuar."
+		return
+	inventory.condition_quantities = data.inventory.duplicate(true)
+	inventory.acquisition_costs = data.get("acquisition_costs", {}).duplicate(true)
+	world.restore(data.get("world", {}))
+	for field in SaveGame.PROGRESSION_FIELDS:
+		if data.progression.has(field):
+			progression.set(field, data.progression[field])
+	day_manager.day = int(data.day)
+	money = int(data.money)
+	reputation = int(data.get("reputation", 0))
+	current_district_id = str(data.get("district", "centro"))
+	selected_supplier_id = str(data.get("supplier", "praca"))
+	relaxed_mode = game_menu.relaxed.button_pressed
+	_update_world_visuals()
+	game_menu.enter_game()
+	if bool(data.get("closed", false)):
+		store_is_open = false
+		day_manager.close_store()
+		day_manager.customers_today = int(data.get("customers_total", 0))
+		summary_report = data.get("summary", {}).duplicate(true)
+		supplier_markets = data.get("markets", {}).duplicate(true)
+		var stats: Dictionary = data.get("stats", {})
+		day_customers_served = int(stats.get("served", 0))
+		day_sales_count = int(stats.get("sales", 0))
+		day_sales_revenue = int(stats.get("revenue", 0))
+		day_errors = int(stats.get("errors", 0))
+		day_failed_customers = int(stats.get("failed", 0))
+		day_profit = int(stats.get("profit", 0))
+		day_start_reputation = int(stats.get("start_reputation", reputation))
+		_present_day_summary(true)
+	else:
+		_begin_day()
+	_update_status()
+
+func _save_checkpoint() -> void:
+	var progress: Dictionary = {}
+	for field in SaveGame.PROGRESSION_FIELDS:
+		progress[field] = progression.get(field)
+	checkpoint = {
+		"version": 1, "day": day_manager.day, "money": money, "reputation": reputation,
+		"world": world.serialize(),
+		"catalog": catalog_snapshot.duplicate(true),
+		"district": current_district_id, "supplier": selected_supplier_id,
+		"inventory": inventory.condition_quantities.duplicate(true),
+		"acquisition_costs": inventory.acquisition_costs.duplicate(true),
+		"progression": progress, "relaxed_mode": relaxed_mode,
+		"closed": not store_is_open, "summary": summary_report.duplicate(true),
+		"markets": supplier_markets.duplicate(true), "customers_total": day_manager.customers_today,
+		"stats": {"served": day_customers_served, "sales": day_sales_count,
+			"revenue": day_sales_revenue, "errors": day_errors, "failed": day_failed_customers,
+			"profit": day_profit, "start_reputation": day_start_reputation}
+	}
+	_write_checkpoint()
+
+func _write_checkpoint() -> void:
+	if SaveGame.write_save(checkpoint, save_path) != OK:
+		_notify("PROGRESSO NÃO SALVO", "Não foi possível gravar o progresso. Verifique o espaço disponível.", "warning")
+
+func _set_relaxed_mode(enabled: bool) -> void:
+	relaxed_mode = enabled
+	if not checkpoint.is_empty():
+		# Settings must not replace the opening-day snapshot with mid-service state.
+		checkpoint["relaxed_mode"] = enabled
+		_write_checkpoint()
+
+func _stock_book(book_id: String, condition: String) -> Dictionary:
+	var book := BookCatalog.get_book(book_id)
+	book["condition"] = condition
+	book["sale_price"] = BookCatalog.price_for_condition(book, condition, "sale_price")
+	book["buy_price"] = BookCatalog.price_for_condition(book, condition, "buy_price")
+	return book
+
+func _open_negotiation(book_id: String, condition: String, inventory_screen: InventoryScreen) -> void:
+	if active_overlay != inventory_screen or customer == null or not customer.visible:
+		return
+	if inventory.get_condition_quantity(book_id, condition) <= 0:
+		return
+	var screen := NegotiationUI.new()
+	$UI.add_child(screen)
+	active_overlay = screen
+	inventory_screen.queue_free()
+	var book := _stock_book(book_id, condition)
+	screen.setup(book, customer, inventory.get_unit_cost(book_id, condition))
+	screen.set_time_left(customer_time_left, relaxed_mode)
+	screen.proposed.connect(func(price: int) -> void:
+		if active_overlay != screen or not store_is_open or not customer.visible or customer.served:
+			return
+		if price < 1 or inventory.get_condition_quantity(book_id, condition) <= 0:
+			return
+		var result: Dictionary = customer.negotiate(book, price)
+		if result.has("counter_price"):
+			screen.show_counter(result)
+			return
+		_complete_stock_action(book, result, screen)
+	)
+	screen.closed.connect(func() -> void:
+		if active_overlay != screen:
+			return
+		active_overlay = null
+		screen.queue_free()
+		_open_inventory()
+	)
+
+func _show_livraria(summary: DaySummaryScreen) -> void:
+	if active_overlay != summary or store_is_open:
+		return
+	var screen := LivrariaUI.new()
+	$UI.add_child(screen)
+	active_overlay = screen
+	summary.hide()
+	screen.setup(world, money, day_manager.day + 1, customer_profiles)
+	screen.purchase_requested.connect(func(upgrade_id: String) -> void:
+		if active_overlay != screen or store_is_open:
+			return
+		var cost: int = world.purchase(upgrade_id, money)
+		if cost < 0:
+			return
+		money -= cost
+		_update_world_visuals()
+		_update_status()
+		screen.refresh(world, money)
+		_save_checkpoint()
+		_notify("LIVRARIA RENOVADA", str(World.UPGRADES[upgrade_id].name) + " já faz parte da loja.", "success")
+	)
+	screen.closed.connect(func() -> void:
+		active_overlay = summary
+		summary.show()
+		screen.queue_free()
+	)
+
+func _update_world_visuals() -> void:
+	shop_decor.update_state(world.upgrades)
+	var event := World.event_for_day(day_manager.day)
+	event_title.text = "HOJE · " + str(event.name).to_upper()
+	event_label.text = str(event.description)
+
+func _create_customer_order(last_book_id: String) -> void:
+	var candidates: Array[Dictionary] = []
+	var district: Dictionary = _current_district()
+	for book in BookCatalog.books_for_preferences(customer.profile_data.get("preference_tags", [])):
+		if district.book_ids.has(str(book.id)) and str(book.id) != last_book_id:
+			candidates.append(book)
+	var book_id := last_book_id if candidates.is_empty() else str(candidates.pick_random().id)
+	var condition := str(customer.profile_data.get("preferred_condition", "novo"))
+	world.create_order(str(customer.profile_data.id), book_id, condition)
+	_notify("ENCOMENDA PARA A PRÓXIMA VISITA", "%s reservou %s (%s). Consulte o Caderno de leitores no fechamento." % [customer.customer_name, str(BookCatalog.get_book(book_id).title), str(BookCatalog.get_condition(condition).label)], "info")
+
+func _load_api_catalog() -> void:
+	game_menu.new_button.disabled = true
+	game_menu.continue_button.disabled = true
+	var original_note: String = game_menu.note.text
+	game_menu.note.text = "Atualizando o catálogo da livraria..."
+	var client := CatalogAPI.new()
+	client.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(client)
+	var data: Dictionary = await client.fetch_catalog(api_url)
+	client.queue_free()
+	# A test or an external action may have started a game while this request ran.
+	if game_menu.in_game:
+		return
+	var connected := _apply_catalog(data)
+	game_menu.new_button.disabled = false
+	game_menu.continue_button.disabled = checkpoint.is_empty()
+	game_menu.note.text = original_note + ("\nCatálogo atualizado." if connected else "\nUsando o catálogo local.")
+
+func _apply_catalog(data: Dictionary) -> bool:
+	for key in ["books", "customers", "suppliers"]:
+		if not data.get(key) is Array or data[key].is_empty():
+			return false
+	var valid_scenes: Array[String] = []
+	for profile in CUSTOMER_PROFILES:
+		valid_scenes.append(str(profile.scene_path))
+	for profile in data.customers:
+		if not profile is Dictionary or not profile.has_all(["id", "name", "scene_path", "mood_type", "preference_tags", "preferred_condition", "district_ids"]):
+			return false
+		if not valid_scenes.has(str(profile.scene_path)) or not World.TRAITS.has(str(profile.mood_type)) or not BookCatalog.CONDITIONS.has(str(profile.preferred_condition)):
+			return false
+		if not profile.preference_tags is Array or not profile.district_ids is Array:
+			return false
+	for supplier in data.suppliers:
+		if not supplier is Dictionary or not supplier.has_all(["id", "name", "price_factor", "risk", "tags"]) or not supplier.tags is Array:
+			return false
+	if not BookCatalog.use_api_books(data.books):
+		return false
+	customer_profiles.assign(data.customers)
+	supplier_profiles.assign(data.suppliers)
+	catalog_snapshot = data.duplicate(true)
+	return true

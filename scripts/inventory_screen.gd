@@ -32,11 +32,21 @@ const PAGE_LINE := Color("c8ad78")
 var inventory: Inventory
 var request_clue: Dictionary = {}
 var has_active_customer := false
+var preferred_condition := ""
+var search_input: LineEdit
+var theme_filter: OptionButton
+var condition_filter: OptionButton
+var book_list: VBoxContainer
+var results_label: Label
+var time_label: Label
+var current_customer: Customer
 
-func setup(value: Inventory, value_request_clue: Dictionary = {}, value_has_active_customer := false) -> void:
+func setup(value: Inventory, value_request_clue: Dictionary = {}, value_has_active_customer := false, value_preferred_condition := "", value_customer: Customer = null) -> void:
 	inventory = value
 	request_clue = value_request_clue.duplicate(true)
 	has_active_customer = value_has_active_customer
+	preferred_condition = value_preferred_condition
+	current_customer = value_customer
 	build()
 
 func build() -> void:
@@ -50,8 +60,11 @@ func build() -> void:
 	add_child(shade)
 
 	var panel := PanelContainer.new()
-	panel.position = Vector2(100, 35)
-	panel.size = Vector2(1080, 650)
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -540.0
+	panel.offset_top = -325.0
+	panel.offset_right = 540.0
+	panel.offset_bottom = 325.0
 	panel.add_theme_stylebox_override("panel", _make_panel_style(PANEL_BG, Color("6d4324"), 8, 14))
 	add_child(panel)
 	var paper := PanelContainer.new()
@@ -92,6 +105,9 @@ func build() -> void:
 	var item_name := "exemplar" if item_count == 1 else "exemplares"
 	var count := _make_badge("%d %s" % [item_count, item_name], Color("d6bd83"), TEXT_PRIMARY)
 	header.add_child(count)
+	if has_active_customer:
+		time_label = _make_label("", 13, TEXT_PRIMARY)
+		header.add_child(time_label)
 
 	if has_active_customer:
 		var request_banner := PanelContainer.new()
@@ -101,27 +117,70 @@ func build() -> void:
 		var request_label := _make_label("PISTA DO CLIENTE · %s · %s" % [clue_type, str(request_clue.get("text", "Observe autor, temas e descrição dos livros."))], 13, TEXT_PRIMARY)
 		request_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		request_banner.add_child(request_label)
+		var preference_label := _make_label("CONDIÇÃO PREFERIDA: " + str(BookCatalog.get_condition(preferred_condition).label).to_upper(), 12, GREEN)
+		layout.add_child(preference_label)
+		if current_customer != null:
+			preference_label.text += " · " + str(current_customer.traits().label) + " · até %d sugestões recusadas" % current_customer.offer_limit()
+
+	var filters := HBoxContainer.new()
+	filters.add_theme_constant_override("separation", 8)
+	layout.add_child(filters)
+	search_input = LineEdit.new()
+	search_input.placeholder_text = "Buscar por título ou autor..."
+	search_input.tooltip_text = "A busca ignora maiúsculas e acentos."
+	search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	search_input.custom_minimum_size.y = 34
+	filters.add_child(search_input)
+	theme_filter = OptionButton.new()
+	theme_filter.tooltip_text = "Filtrar por tema"
+	theme_filter.add_item("Todos os temas")
+	theme_filter.set_item_metadata(0, "")
+	var tags: Array[String] = []
+	for book in BookCatalog.all_books():
+		for tag in book.get("tags", []):
+			if not tags.has(str(tag)):
+				tags.append(str(tag))
+	tags.sort()
+	for tag in tags:
+		theme_filter.add_item(tag.capitalize())
+		theme_filter.set_item_metadata(theme_filter.item_count - 1, tag)
+	filters.add_child(theme_filter)
+	condition_filter = OptionButton.new()
+	condition_filter.tooltip_text = "Filtrar por condição do exemplar"
+	condition_filter.add_item("Todas as condições")
+	condition_filter.set_item_metadata(0, "")
+	for condition in BookCatalog.CONDITIONS:
+		condition_filter.add_item(str(BookCatalog.get_condition(condition).label))
+		condition_filter.set_item_metadata(condition_filter.item_count - 1, condition)
+	filters.add_child(condition_filter)
+	var clear := Button.new()
+	clear.text = "LIMPAR"
+	_style_button(clear, false)
+	clear.pressed.connect(func() -> void:
+		search_input.text = ""
+		theme_filter.select(0)
+		condition_filter.select(0)
+		_refresh_books()
+	)
+	filters.add_child(clear)
+	results_label = _make_label("", 11, TEXT_MUTED)
+	layout.add_child(results_label)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size.y = 400
+	scroll.custom_minimum_size.y = 280
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	layout.add_child(scroll)
 
-	var list := VBoxContainer.new()
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	list.add_theme_constant_override("separation", 9)
-	scroll.add_child(list)
-
-	for book in stocked_books:
-		list.add_child(_make_book_row(book))
-	if stocked_books.is_empty():
-		var empty := PanelContainer.new()
-		empty.add_theme_stylebox_override("panel", _make_panel_style(CARD_BG, PAGE_LINE, 1, 18))
-		list.add_child(empty)
-		var empty_text := _make_label("O estoque está vazio. Visite o mercador no próximo dia de compras para repor os livros.", 16, TEXT_MUTED)
-		empty.add_child(empty_text)
+	book_list = VBoxContainer.new()
+	book_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	book_list.add_theme_constant_override("separation", 9)
+	scroll.add_child(book_list)
+	search_input.text_changed.connect(func(_text: String) -> void: _refresh_books())
+	theme_filter.item_selected.connect(func(_index: int) -> void: _refresh_books())
+	condition_filter.item_selected.connect(func(_index: int) -> void: _refresh_books())
+	_refresh_books()
 
 	var footer := HBoxContainer.new()
 	footer.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -132,6 +191,56 @@ func build() -> void:
 	_style_button(close, true)
 	close.pressed.connect(func() -> void: closed.emit())
 	footer.add_child(close)
+
+static func normalized_search(value: String) -> String:
+	var result := value.to_lower().strip_edges()
+	for pair in [["á", "a"], ["à", "a"], ["â", "a"], ["ã", "a"], ["é", "e"], ["ê", "e"], ["í", "i"], ["ó", "o"], ["ô", "o"], ["õ", "o"], ["ú", "u"], ["ü", "u"], ["ç", "c"]]:
+		result = result.replace(pair[0], pair[1])
+	return result
+
+func filtered_books() -> Array[Dictionary]:
+	var matches: Array[Dictionary] = []
+	var query := normalized_search(search_input.text)
+	var tag := str(theme_filter.get_item_metadata(theme_filter.selected))
+	var condition := str(condition_filter.get_item_metadata(condition_filter.selected))
+	for book in inventory.stocked_books():
+		if not query.is_empty() and not normalized_search(str(book.title) + " " + str(book.author)).contains(query):
+			continue
+		if not tag.is_empty() and not book.get("tags", []).has(tag):
+			continue
+		if not condition.is_empty():
+			var conditions: Array[Dictionary] = []
+			for item in book.conditions:
+				if str(item.condition) == condition:
+					conditions.append(item)
+			if conditions.is_empty():
+				continue
+			book["conditions"] = conditions
+			book["quantity"] = int(conditions[0].quantity)
+		matches.append(book)
+	return matches
+
+func _refresh_books() -> void:
+	for child in book_list.get_children():
+		book_list.remove_child(child)
+		child.queue_free()
+	var matches := filtered_books()
+	results_label.text = "%d título(s) encontrado(s)" % matches.size()
+	for book in matches:
+		book_list.add_child(_make_book_row(book))
+	if matches.is_empty():
+		var message := "Nenhum livro corresponde aos filtros. Experimente outra busca."
+		if inventory.stocked_books().is_empty():
+			message = "O estoque está vazio. Compre livros no fechamento do dia para repor as estantes."
+		var empty := _make_label(message, 16, TEXT_MUTED)
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		book_list.add_child(empty)
+
+func set_time_left(seconds: float, relaxed: bool) -> void:
+	if time_label == null:
+		return
+	time_label.text = "SEM LIMITE" if relaxed else "TEMPO %02d:%02d" % [ceili(seconds) / 60, ceili(seconds) % 60]
+	time_label.add_theme_color_override("font_color", Color("9d342a") if not relaxed and seconds <= 15.0 else TEXT_PRIMARY)
 
 func _make_book_row(book: Dictionary) -> Control:
 	var book_id: String = str(book.get("id", ""))
@@ -209,6 +318,24 @@ func _make_book_row(book: Dictionary) -> Control:
 	var themes := _make_label("TEMAS  " + ", ".join(theme_names), 10, TEXT_MUTED)
 	themes.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	details.add_child(themes)
+	if has_active_customer and current_customer != null:
+		var affinity := _make_label("", 11, GREEN)
+		affinity.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		details.add_child(affinity)
+		var update_affinity := func() -> void:
+			var copy := book.duplicate()
+			var selected := "novo"
+			for choice in condition_selector.get_children():
+				if choice.button_pressed:
+					selected = str(choice.get_meta("condition"))
+			copy["condition"] = selected
+			# Explain personal taste while leaving the request clues for the player to solve.
+			var assessment := current_customer.recommendation_assessment(copy, false)
+			var score := float(assessment.chance)
+			var interest := "ALTA" if score >= 0.7 else ("MODERADA" if score >= 0.4 else ("BAIXA" if score > 0.0 else "NENHUMA"))
+			affinity.text = "AFINIDADE COM OS GOSTOS · %s · %s" % [interest, str(assessment.reason)]
+		condition_group.pressed.connect(func(_button: BaseButton) -> void: update_affinity.call())
+		update_affinity.call()
 
 	if has_active_customer:
 		var actions := VBoxContainer.new()

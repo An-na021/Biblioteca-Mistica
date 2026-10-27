@@ -21,6 +21,30 @@ const CONDITIONS := {
 	"raro": {"label": "Raro", "buy_multiplier": 1.6, "sale_multiplier": 1.8}
 }
 
+static var _api_books: Array[Dictionary] = []
+
+static func reset_catalog() -> void:
+	_api_books.clear()
+
+static func use_api_books(records: Array) -> bool:
+	var converted: Array[Dictionary] = []
+	for record in records:
+		if not record is Dictionary or not record.has_all(["id", "title", "author", "buy_price", "sale_price", "tags", "district_ids"]):
+			return false
+		if not record.tags is Array or not record.district_ids is Array or int(record.buy_price) <= 0 or int(record.sale_price) <= 0:
+			return false
+		var item: Dictionary = record.duplicate(true)
+		item["cover_color"] = Color.from_string(str(record.get("cover_color", "#604b78")), Color("604b78"))
+		item["cover_texture"] = null
+		var cover_path := str(record.get("cover_path", ""))
+		if cover_path.begins_with("res://bookimg/") and ResourceLoader.exists(cover_path):
+			item["cover_texture"] = load(cover_path) as Texture2D
+		converted.append(item)
+	if converted.is_empty():
+		return false
+	_api_books = converted
+	return true
+
 static func get_condition(condition_id: String) -> Dictionary:
 	return CONDITIONS.get(condition_id, CONDITIONS["novo"]).duplicate(true)
 
@@ -30,23 +54,23 @@ static func price_for_condition(book: Dictionary, condition_id: String, price_ke
 	return maxi(1, roundi(float(book.get(price_key, 1)) * float(condition.get(multiplier_key, 1.0))))
 
 static func get_book(book_id: String) -> Dictionary:
-	for book in BOOKS:
+	for book in _api_books if not _api_books.is_empty() else BOOKS:
 		if book.id == book_id:
 			return book.duplicate()
 	return {}
 
 static func all_books() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for book in BOOKS:
+	for book in _api_books if not _api_books.is_empty() else BOOKS:
 		result.append(book.duplicate())
 	return result
 
 static func random_book() -> Dictionary:
-	return BOOKS.pick_random().duplicate()
+	return all_books().pick_random().duplicate()
 
 static func books_for_preferences(preferences: Array) -> Array[Dictionary]:
 	var matches: Array[Dictionary] = []
-	for book in BOOKS:
+	for book in all_books():
 		for tag in book.get("tags", []):
 			if preferences.has(tag):
 				matches.append(book.duplicate())

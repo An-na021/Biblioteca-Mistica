@@ -33,14 +33,20 @@ func _build() -> void:
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	panel.position = Vector2(-430, 104)
-	panel.size = Vector2(395, 525)
+	panel.offset_left = -430.0
+	panel.offset_top = 104.0
+	panel.offset_right = -35.0
+	panel.offset_bottom = 629.0
 	panel.add_theme_stylebox_override("panel", _make_panel_style(PANEL_BG, GOLD, 2, 18, 12))
 	add_child(panel)
 
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(scroll)
 	var layout := VBoxContainer.new()
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_theme_constant_override("separation", 10)
-	panel.add_child(layout)
+	scroll.add_child(layout)
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 8)
@@ -67,6 +73,9 @@ func _build() -> void:
 	name_card.add_child(name_layout)
 	name_layout.add_child(_make_label(str(profile.get("name", customer.customer_name)), 19, TEXT_PRIMARY))
 	name_layout.add_child(_make_label("CLIENTE ATUAL", 11, GREEN))
+	var behavior := _make_label(str(profile.get("behavior_hint", "")), 12, GOLD)
+	behavior.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_layout.add_child(behavior)
 
 	if not customer.get_request_clue().is_empty():
 		layout.add_child(_make_requested_book_card())
@@ -86,6 +95,7 @@ func _build() -> void:
 	layout.add_child(details)
 	details.add_child(_make_section("JEITO DE SER", str(profile.get("personality", "Ainda não conhecemos bem este cliente."))))
 	details.add_child(_make_section("SUA HISTÓRIA", str(profile.get("history", "Nenhum registro disponível."))))
+	details.add_child(_make_section("NOSSOS ENCONTROS", str(profile.get("memory_text", "Ainda estamos conhecendo este leitor."))))
 	var more := Button.new()
 	more.text = "VER MAIS SOBRE O CLIENTE  +"
 	more.custom_minimum_size.y = 34

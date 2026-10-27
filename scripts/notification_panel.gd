@@ -13,7 +13,8 @@ func _ready() -> void:
 	notification_stack = VBoxContainer.new()
 	notification_stack.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	notification_stack.offset_left = -380.0
-	notification_stack.offset_top = 155.0
+	# Leave room for the status panel and the customer timer above the toasts.
+	notification_stack.offset_top = 292.0
 	notification_stack.offset_right = -20.0
 	notification_stack.offset_bottom = 690.0
 	notification_stack.add_theme_constant_override("separation", 7)
@@ -29,6 +30,10 @@ func show_notification(title: String, message: String, tone: String = "info") ->
 	toast.custom_minimum_size = Vector2(0, 58)
 	toast.add_theme_stylebox_override("panel", _make_style(_tone_color(tone), Color("8e7445")))
 	notification_stack.add_child(toast)
+	while notification_stack.get_child_count() > 4:
+		var oldest := notification_stack.get_child(0)
+		notification_stack.remove_child(oldest)
+		oldest.queue_free()
 
 	var content := HBoxContainer.new()
 	content.add_theme_constant_override("separation", 9)
@@ -57,7 +62,7 @@ func show_notification(title: String, message: String, tone: String = "info") ->
 	text_stack.add_child(message_label)
 
 	toast.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	var tween := create_tween()
+	var tween := toast.create_tween()
 	tween.tween_property(toast, "modulate:a", 1.0, 0.18)
 	tween.tween_interval(2.8)
 	tween.tween_property(toast, "modulate:a", 0.0, 0.35)

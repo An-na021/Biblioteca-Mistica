@@ -1,0 +1,356 @@
+{
+	"books": [
+		{
+			"author": "A. Valente",
+			"buy_price": 5,
+			"cover_color": "#3a5e46",
+			"cover_path": "res://bookimg/nhax.png",
+			"description": "Um romance estranho sobre relogios, sementes e promessas antigas.",
+			"district_ids": [
+				"centro",
+				"bosque"
+			],
+			"id": "jardim_horas",
+			"sale_price": 8,
+			"tags": [
+				"natureza",
+				"poesia",
+				"alquimia",
+				"magia"
+			],
+			"title": "O Jardim das Horas"
+		},
+		{
+			"author": "I. Nobre",
+			"buy_price": 4,
+			"cover_color": "#912521",
+			"cover_path": "res://bookimg/percy.png",
+			"description": "Um diario de viagem com paginas salgadas.",
+			"district_ids": [
+				"centro",
+				"minas"
+			],
+			"id": "mar_vermelho",
+			"sale_price": 6,
+			"tags": [
+				"viagem",
+				"mapas",
+				"aventura"
+			],
+			"title": "O Mar Vermelho"
+		},
+		{
+			"author": "L. Duarte",
+			"buy_price": 3,
+			"cover_color": "#263a6b",
+			"cover_path": "res://bookimg/nhac.jpg",
+			"description": "Um almanaque pratico, cheio de manchas de tinta.",
+			"district_ids": [
+				"centro",
+				"bosque"
+			],
+			"id": "inventario_chuva",
+			"sale_price": 5,
+			"tags": [
+				"natureza",
+				"alquimia",
+				"diagramas"
+			],
+			"title": "Inventario de Chuva"
+		},
+		{
+			"author": "M. Sereno",
+			"buy_price": 7,
+			"cover_color": "#315f83",
+			"cover_path": "res://bookimg/livro 3.png",
+			"description": "Contos de trilhas que aparecem apenas depois da chuva.",
+			"district_ids": [
+				"bosque"
+			],
+			"id": "floresta_azul",
+			"sale_price": 10,
+			"tags": [
+				"natureza",
+				"poesia",
+				"aventura"
+			],
+			"title": "A Floresta Azul"
+		},
+		{
+			"author": "R. Azevedo",
+			"buy_price": 9,
+			"cover_color": "#7d4032",
+			"cover_path": "res://bookimg/pother.png",
+			"description": "Uma lenda antiga guardada entre cinzas e ouro.",
+			"district_ids": [
+				"minas"
+			],
+			"id": "ultimo_dragao",
+			"sale_price": 12,
+			"tags": [
+				"mitologia",
+				"criaturas",
+				"batalhas",
+				"magia"
+			],
+			"title": "O Ultimo Dragao"
+		},
+		{
+			"author": "E. Monte",
+			"buy_price": 8,
+			"cover_color": "#536d77",
+			"cover_path": "res://bookimg/cronicas_norte.png",
+			"description": "Mapas, neve e historias de uma fronteira distante.",
+			"district_ids": [
+				"minas"
+			],
+			"id": "cronicas_norte",
+			"sale_price": 11,
+			"tags": [
+				"cronicas",
+				"mapas",
+				"viagem",
+				"historia"
+			],
+			"title": "As Cronicas do Norte"
+		},
+		{
+			"author": "C. Vilar",
+			"buy_price": 6,
+			"cover_color": "#765c34",
+			"cover_path": "res://bookimg/relogio_perdido.png",
+			"description": "Um misterio silencioso entre engrenagens e cartas.",
+			"district_ids": [
+				"minas"
+			],
+			"id": "relogio_perdido",
+			"sale_price": 9,
+			"tags": [
+				"engenharia",
+				"diagramas",
+				"cronicas"
+			],
+			"title": "O Relogio Perdido"
+		},
+		{
+			"author": "N. Faria",
+			"buy_price": 10,
+			"cover_color": "#604b78",
+			"cover_path": "res://bookimg/reino_vidro.png",
+			"description": "Fabulas luminosas de um palacio fragil.",
+			"district_ids": [
+				"centro",
+				"bosque"
+			],
+			"id": "reino_vidro",
+			"sale_price": 13,
+			"tags": [
+				"poesia",
+				"mitologia",
+				"cronicas",
+				"rituais"
+			],
+			"title": "O Reino de Vidro"
+		}
+	],
+	"customers": [
+		{
+			"district_ids": [
+				"bosque"
+			],
+			"greeting": "Boa tarde",
+			"history": "Viajou entre bosques procurando registros sobre as sementes luminosas de sua terra.",
+			"id": "lyria",
+			"mood_type": "indeciso",
+			"name": "Lyria, a elfa",
+			"personality": "Observadora, paciente e muito ligada a historias antigas.",
+			"preference_tags": [
+				"natureza",
+				"poesia",
+				"mitologia"
+			],
+			"preferences": "Prefere romances poeticos, mitologia e livros com temas de natureza.",
+			"preferred_condition": "usado",
+			"scene_path": "res://scenes/characters/elfa.tscn"
+		},
+		{
+			"district_ids": [
+				"centro",
+				"minas"
+			],
+			"greeting": "Ola",
+			"history": "Estuda com um mago itinerante e economiza moedas para montar sua primeira biblioteca.",
+			"id": "tom",
+			"mood_type": "apressado",
+			"name": "Tom, o aprendiz",
+			"personality": "Curioso, entusiasmado e facilmente impressionado por magia.",
+			"preference_tags": [
+				"magia",
+				"aventura",
+				"diagramas",
+				"mitologia"
+			],
+			"preferences": "Busca grimorios introdutorios, aventuras e livros cheios de diagramas.",
+			"preferred_condition": "novo",
+			"scene_path": "res://scenes/characters/aprendiz.tscn"
+		},
+		{
+			"district_ids": [
+				"centro",
+				"minas"
+			],
+			"greeting": "Com licenca",
+			"history": "Foi bibliotecario de uma torre arcana antes de partir em busca de conhecimentos perdidos.",
+			"id": "mestre_elian",
+			"mood_type": "dificil",
+			"name": "Mestre Elian",
+			"personality": "Reservado, exigente e sempre atento a detalhes raros.",
+			"preference_tags": [
+				"cronicas",
+				"magia",
+				"historia"
+			],
+			"preferences": "Valoriza cronicas, tratados de magia e edicoes antigas bem conservadas.",
+			"preferred_condition": "raro",
+			"scene_path": "res://scenes/characters/mago.tscn"
+		},
+		{
+			"district_ids": [
+				"minas"
+			],
+			"greeting": "Boa noite",
+			"history": "Trabalhou em minas do norte e coleciona relatos sobre povos e reinos subterraneos.",
+			"id": "borin",
+			"mood_type": "negociador",
+			"name": "Borin, o anao",
+			"personality": "Direto, desconfiado e leal quando encontra um bom negocio.",
+			"preference_tags": [
+				"mapas",
+				"viagem",
+				"engenharia",
+				"batalhas"
+			],
+			"preferences": "Prefere mapas, relatos de viagem, engenharia e historias de batalhas.",
+			"preferred_condition": "usado",
+			"scene_path": "res://scenes/characters/anao.tscn"
+		},
+		{
+			"district_ids": [
+				"centro",
+				"bosque"
+			],
+			"greeting": "Saudacoes, guardia dos livros",
+			"history": "Percorre cidades reunindo grimorios e ingredientes para suas pesquisas alquimicas.",
+			"id": "thalion_grimorio",
+			"mood_type": "colecionador",
+			"name": "Thalion Grimório",
+			"personality": "Um estudioso inquieto, generoso e fascinado por todo tipo de magia pratica.",
+			"preference_tags": [
+				"magia",
+				"alquimia",
+				"rituais"
+			],
+			"preferences": "Procura grimorios antigos, alquimia e estudos sobre artefatos arcanos.",
+			"preferred_condition": "raro",
+			"scene_path": "res://scenes/characters/thalion_grimorio.tscn"
+		},
+		{
+			"district_ids": [
+				"centro",
+				"minas"
+			],
+			"greeting": "Miau... digo, boa tarde",
+			"history": "Ensina historia arcana e pesquisa a antiga tradicao dos familiares falantes.",
+			"id": "professor_bigodes",
+			"mood_type": "dificil",
+			"name": "Professor Bigodes",
+			"personality": "Erudito, meticuloso e um pouco dramatico; avalia cada livro com cuidado.",
+			"preference_tags": [
+				"criaturas",
+				"historia",
+				"magia"
+			],
+			"preferences": "Prefere bestiarios, historia da magia e tratados sobre criaturas encantadas.",
+			"preferred_condition": "novo",
+			"scene_path": "res://scenes/characters/professor_bigodes.tscn"
+		},
+		{
+			"district_ids": [
+				"bosque"
+			],
+			"greeting": "Boa noite. Estou buscando algo raro.",
+			"history": "Viaja em busca de registros esquecidos para completar um arquivo de rituais antigos.",
+			"id": "lilith_vespera",
+			"mood_type": "colecionador",
+			"name": "Lilith Vespera",
+			"personality": "Confiante, observadora e precisa ao falar sobre seus estudos.",
+			"preference_tags": [
+				"cronicas",
+				"rituais",
+				"mitologia"
+			],
+			"preferences": "Interessa-se por cronicas ocultas, pactos lendarios e magia cerimonial.",
+			"preferred_condition": "raro",
+			"scene_path": "res://scenes/characters/lilith_vespera.tscn"
+		},
+		{
+			"district_ids": [
+				"bosque"
+			],
+			"greeting": "Ola, boa tarde.",
+			"history": "Estuda a relacao entre ciclos lunares, plantas magicas e antigas receitas de pocao.",
+			"id": "evelune",
+			"mood_type": "indeciso",
+			"name": "Evelune",
+			"personality": "Gentil e reservada, mas se anima quando encontra conhecimentos novos.",
+			"preference_tags": [
+				"natureza",
+				"alquimia",
+				"poesia"
+			],
+			"preferences": "Busca herbarios, estudos dos ciclos lunares e receitas de alquimia natural.",
+			"preferred_condition": "novo",
+			"scene_path": "res://scenes/characters/evelune.tscn"
+		}
+	],
+	"suppliers": [
+		{
+			"description": "Preços equilibrados; 3% de chance de o exemplar chegar danificado.",
+			"id": "praca",
+			"name": "Mercador da Praça",
+			"price_factor": 1.0,
+			"risk": 0.03,
+			"special_orders": true,
+			"tags": []
+		},
+		{
+			"description": "Preços menores; 22% de chance de o exemplar chegar danificado.",
+			"id": "caravana",
+			"name": "Caravana Verde",
+			"price_factor": 0.82,
+			"risk": 0.22,
+			"special_orders": false,
+			"tags": [
+				"natureza",
+				"poesia",
+				"viagem",
+				"alquimia"
+			]
+		},
+		{
+			"description": "Edições raras; 5% de chance de o exemplar chegar danificado.",
+			"id": "antiquario",
+			"name": "Antiquário das Minas",
+			"price_factor": 1.28,
+			"risk": 0.05,
+			"special_orders": false,
+			"tags": [
+				"cronicas",
+				"mitologia",
+				"mapas",
+				"historia",
+				"rituais"
+			]
+		}
+	]
+}

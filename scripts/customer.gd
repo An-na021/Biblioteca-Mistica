@@ -6,7 +6,7 @@ extends Interactable
 @export var requested_book_id: String = ""
 @export var portrait_scale: Vector2 = Vector2(0.55, 0.55)
 
-const MAX_DECLINED_ALTERNATE_OFFERS := 4
+const World = preload("res://scripts/shop_world.gd")
 
 var served := false
 var profile_data: Dictionary = {}
@@ -15,6 +15,12 @@ var declined_alternate_offers := 0
 var request_mode := "titulo"
 var request_clue: Dictionary = {}
 var acceptable_book_ids: Array[String] = []
+var memory_data: Dictionary = {}
+var comfort_bonus := 0.0
+var display_bonus := 0.0
+var extra_patience := 0.0
+var negotiation_refusals := 0
+var offer_decisions: Dictionary = {}
 @onready var portrait: Sprite2D = get_node_or_null("Portrait") as Sprite2D
 @onready var fallback_art: Array[CanvasItem] = [get_node_or_null("Body") as CanvasItem, get_node_or_null("Head") as CanvasItem, get_node_or_null("Hair") as CanvasItem, get_node_or_null("Collar") as CanvasItem]
 
@@ -40,18 +46,41 @@ const VOICES := {
 	"evelune": ["Era esse mesmo! Vou comparar suas anotações com meus estudos da natureza.", "Não é %s. Talvez eu o encontre em outra estante.", "Tudo bem, aceito. Este livro pode me ajudar nos estudos.", "Eu buscava outro título, mas este também pode revelar algo interessante.", "Agradeço, mas ainda procuro %s.", "Obrigada. Vou ler com calma e anotar o que descobrir."]
 }
 
-func configure(profile: Dictionary, requested_book: Dictionary, current_reputation: int = 0) -> void:
+func configure(profile: Dictionary, requested_book: Dictionary, current_reputation: int = 0, context: Dictionary = {}) -> void:
 	profile_data = profile.duplicate(true)
 	customer_name = str(profile.get("name", "Cliente"))
 	requested_book_id = str(requested_book.get("id", ""))
+	memory_data = context.get("memory", {}).duplicate(true)
+	comfort_bonus = float(context.get("recommendation_bonus", 0.0))
+	display_bonus = float(context.get("negotiation_bonus", 0.0))
+	extra_patience = float(context.get("patience_bonus", 0.0))
 	reputation_band = "low" if current_reputation < -2 else ("high" if current_reputation >= 3 else "regular")
 	_request_clue_for_book(requested_book)
-	if reputation_band == "high":
-		request_text = "Que bom voltar a esta livraria. " + request_text
+	var order: Dictionary = memory_data.get("order", {})
+	if not order.is_empty():
+		profile_data["preferred_condition"] = str(order.condition)
+		request_mode = "encomenda"
+		requested_book_id = str(order.book_id)
+		acceptable_book_ids.clear()
+		acceptable_book_ids.append(requested_book_id)
+		request_text = "Vim buscar minha encomenda: %s, na condição %s. Separei 4 moedas extras pelo cuidado." % [str(BookCatalog.get_book(requested_book_id).get("title", "")), str(BookCatalog.get_condition(str(order.condition)).label)]
+		request_clue = {"type": "encomenda", "text": request_text, "attribute": requested_book_id}
+	if str(memory_data.get("last_outcome", "")) == "left":
+		request_text = "Na última visita saí sem uma leitura. Vamos tentar de novo? " + request_text
+	elif int(memory_data.get("purchases", 0)) > 0:
+		var previous := str(BookCatalog.get_book(str(memory_data.get("last_book", ""))).get("title", "a leitura anterior"))
+		request_text = "Gostei de %s, que levei daqui. " % previous + request_text
 	elif reputation_band == "low":
 		request_text = "Espero que desta vez encontre o que procuro. " + request_text
+	elif reputation_band == "high":
+		request_text = "Ouvi boas recomendações desta livraria. " + request_text
+	request_clue["text"] = request_text
+	profile_data["behavior_hint"] = behavior_hint()
+	profile_data["memory_text"] = str(context.get("story", "Primeira visita: vamos conhecer este leitor."))
 	served = false
 	declined_alternate_offers = 0
+	negotiation_refusals = 0
+	offer_decisions.clear()
 	interaction_name = customer_name
 	description = request_text
 	_set_portrait(str(profile.get("portrait_path", "")))
@@ -65,6 +94,44 @@ func get_request_clue() -> Dictionary:
 
 func can_accept_book(book_id: String) -> bool:
 	return acceptable_book_ids.has(book_id)
+
+func traits() -> Dictionary:
+	return World.get_traits(str(profile_data.get("mood_type", "indeciso")))
+
+func patience_seconds() -> float:
+	return float(traits().patience) + extra_patience
+
+func offer_limit() -> int:
+	return int(traits().offers)
+
+func behavior_hint() -> String:
+	var data := traits()
+	return "%s · %ds de paciência · %s" % [str(data.label), int(patience_seconds()), str(data.hint)]
+
+func recommendation_assessment(book: Dictionary, include_request_match := true) -> Dictionary:
+	var shared: Array[String] = []
+	for tag in profile_data.get("preference_tags", []):
+		if book.get("tags", []).has(tag):
+			shared.append(str(tag))
+	var condition_matches := str(book.get("condition", "novo")) == str(profile_data.get("preferred_condition", "novo"))
+	if not condition_matches:
+		return {"chance": 0.0, "reason": "A condição não corresponde à preferência deste leitor."}
+	if include_request_match and can_accept_book(str(book.get("id", ""))):
+		return {"chance": 1.0, "reason": "Este livro corresponde à pista do pedido."}
+	if shared.is_empty():
+		return {"chance": 0.0, "reason": "Não encontrei temas que combinem com meus interesses."}
+	var chance := 0.30 + 0.20 * mini(shared.size(), 3) + float(traits().openness) + comfort_bonus
+	chance += minf(0.12, float(memory_data.get("purchases", 0)) * 0.04)
+	chance += 0.08 if reputation_band == "high" else (-0.08 if reputation_band == "low" else 0.0)
+	if str(profile_data.get("mood_type", "")) == "colecionador" and str(book.get("condition", "")) == "raro":
+		chance += 0.15
+	return {"chance": clampf(chance, 0.05, 0.96), "reason": "Combina com meu interesse por " + ", ".join(shared) + "."}
+
+func negotiation_limit(book: Dictionary) -> int:
+	var multiplier := float(traits().markup) + display_bonus
+	if str(profile_data.get("mood_type", "")) == "colecionador" and str(book.get("condition", "")) == "raro":
+		multiplier += 0.10
+	return maxi(1, floori(float(book.sale_price) * multiplier))
 
 func _request_clue_for_book(book: Dictionary) -> void:
 	acceptable_book_ids.clear()
@@ -161,7 +228,7 @@ func _condition_rejection(book: Dictionary, count_as_offer := false) -> Dictiona
 	var reputation_change := 0
 	if count_as_offer:
 		declined_alternate_offers += 1
-		completed = declined_alternate_offers >= MAX_DECLINED_ALTERNATE_OFFERS
+		completed = declined_alternate_offers >= offer_limit()
 		if completed:
 			served = true
 			reputation_change = -1
@@ -177,15 +244,23 @@ func deliver(book: Dictionary) -> Dictionary:
 		return {"accepted": true, "text": _line(0, book.id), "money": int(book.sale_price), "reputation": 1}
 	return {"accepted": false, "text": _not_a_match_text(), "money": 0, "reputation": -1}
 
-func negotiate(book: Dictionary) -> Dictionary:
+func negotiate(book: Dictionary, proposed_price: int = 0) -> Dictionary:
 	var condition_result := _condition_rejection(book)
 	if not condition_result.is_empty():
 		return condition_result
 	if not can_accept_book(str(book.get("id", ""))):
 		return {"accepted": false, "text": _not_a_match_text(), "money": 0, "reputation": 0}
-	served = true
-	var negotiated_price: int = int(book.sale_price) + max(1, ceili(float(book.sale_price) * 0.25))
-	return {"accepted": true, "text": _line(2, book.id), "money": negotiated_price, "reputation": 1}
+	var price := int(book.sale_price) if proposed_price <= 0 else proposed_price
+	var limit := negotiation_limit(book)
+	if price <= limit:
+		served = true
+		return {"accepted": true, "text": _line(2, book.id), "money": price, "reputation": 1}
+	negotiation_refusals += 1
+	if negotiation_refusals >= 3:
+		served = true
+		return {"accepted": false, "completed": true, "text": "Insistimos demais no preço. Vou procurar em outra livraria.", "money": 0, "reputation": -1}
+	return {"accepted": false, "counter_price": limit, "counts_as_error": false,
+		"text": "Esse valor está acima do que posso pagar. Posso oferecer %d moedas. Ainda aceito %d proposta(s)." % [limit, 3 - negotiation_refusals], "money": 0, "reputation": 0}
 
 func react_to_offer(book: Dictionary) -> Dictionary:
 	var condition_result := _condition_rejection(book, true)
@@ -193,13 +268,17 @@ func react_to_offer(book: Dictionary) -> Dictionary:
 		return condition_result
 	if can_accept_book(str(book.get("id", ""))):
 		return deliver(book)
-	if randf() < 0.45:
+	var assessment := recommendation_assessment(book)
+	var key := str(book.id) + ":" + str(book.get("condition", "novo"))
+	if not offer_decisions.has(key):
+		offer_decisions[key] = randf() < float(assessment.chance)
+	if bool(offer_decisions[key]):
 		served = true
-		return {"accepted": true, "completed": true, "text": _line(3, book.id), "money": int(book.sale_price), "reputation": 0}
+		return {"accepted": true, "completed": true, "text": _line(3, book.id) + " " + str(assessment.reason), "money": int(book.sale_price), "reputation": 0}
 	declined_alternate_offers += 1
-	if declined_alternate_offers >= MAX_DECLINED_ALTERNATE_OFFERS:
+	if declined_alternate_offers >= offer_limit():
 		served = true
 		var farewell := _line(4, requested_book_id) if request_mode == "titulo" else _not_a_match_text()
 		return {"accepted": false, "completed": true, "text": farewell + " Vou voltar quando o livro estiver disponivel.", "money": 0, "reputation": -1}
 	var response := _line(4, requested_book_id) if request_mode == "titulo" else _not_a_match_text()
-	return {"accepted": false, "completed": false, "text": response, "money": 0, "reputation": 0}
+	return {"accepted": false, "completed": false, "text": response + " " + str(assessment.reason) + " Restam %d sugestão(ões)." % (offer_limit() - declined_alternate_offers), "money": 0, "reputation": 0}
