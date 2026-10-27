@@ -505,8 +505,8 @@ func _make_merchant_offers(supplier: Dictionary) -> Dictionary:
 			"risk": float(supplier.get("risk", 0.0)),
 			"supplier_id": str(supplier.get("id", ""))
 		}
-	# The town bookseller can source every pending special order, including rarities.
-	if bool(supplier.get("special_orders", str(supplier.get("id", "")) == "praca")):
+	# Keep a source for reservations even when an API catalog replaces the suppliers.
+	if _supplier_handles_orders(supplier):
 		var needed: Dictionary = {}
 		for order in world.pending_orders():
 			var order_id := str(order.book_id)
@@ -516,13 +516,30 @@ func _make_merchant_offers(supplier: Dictionary) -> Dictionary:
 			var entry: Dictionary = offers.get(order_id, {"quantity": 0, "conditions": {}, "risk": float(supplier.risk), "supplier_id": str(supplier.id)})
 			var conditions: Dictionary = entry.conditions
 			var condition_entry: Dictionary = conditions.get(order_condition, {"quantity": 0})
-			var quantity := maxi(int(condition_entry.quantity), int(needed[key]))
+			var missing := maxi(0, int(needed[key]) - inventory.get_condition_quantity(order_id, order_condition))
+			var quantity := maxi(int(condition_entry.quantity), missing)
 			entry["quantity"] = int(entry.quantity) + quantity - int(condition_entry.quantity)
 			condition_entry["quantity"] = quantity
-			condition_entry["price"] = BookCatalog.price_for_condition(BookCatalog.get_book(order_id), order_condition, "buy_price")
+			condition_entry["price"] = maxi(1, roundi(float(BookCatalog.price_for_condition(BookCatalog.get_book(order_id), order_condition, "buy_price")) * float(supplier.get("price_factor", 1.0))))
 			conditions[order_condition] = condition_entry
 			offers[order_id] = entry
 	return offers
+
+func _supplier_handles_orders(supplier: Dictionary) -> bool:
+	for candidate in supplier_profiles:
+		if bool(candidate.get("special_orders", str(candidate.get("id", "")) == "praca")):
+			return bool(supplier.get("special_orders", str(supplier.get("id", "")) == "praca"))
+	return not supplier_profiles.is_empty() and str(supplier.id) == str(supplier_profiles[0].id)
+
+func _shop_reservations() -> Array[Dictionary]:
+	var reservations := world.pending_orders()
+	for order in reservations:
+		order["customer_name"] = str(order.customer_id)
+		for profile in customer_profiles:
+			if str(profile.id) == str(order.customer_id):
+				order["customer_name"] = str(profile.name)
+				break
+	return reservations
 
 func _open_inventory() -> void:
 	var screen := InventoryScreen.new()
@@ -536,7 +553,27 @@ func _open_inventory() -> void:
 	screen.deliver_requested.connect(func(book_id: String, condition: String) -> void: _handle_stock_action(book_id, condition, "deliver", screen))
 	screen.negotiate_requested.connect(func(book_id: String, condition: String) -> void: _open_negotiation(book_id, condition, screen))
 	screen.offer_requested.connect(func(book_id: String, condition: String) -> void: _handle_stock_action(book_id, condition, "offer", screen))
+	screen.reservation_requested.connect(func() -> void: _reserve_customer_book(screen))
 	screen.closed.connect(func() -> void: active_overlay = null; screen.queue_free())
+
+func _reserve_customer_book(screen: InventoryScreen) -> void:
+	if active_overlay != screen or not store_is_open or customer == null or not customer.visible or not customer.can_reserve(inventory):
+		return
+	var book_id := customer.requested_book_id
+	var condition := str(customer.profile_data.get("preferred_condition", "novo"))
+	if not world.reserve_book(str(customer.profile_data.id), book_id, condition):
+		return
+	var title := str(BookCatalog.get_book(book_id).get("title", "Livro"))
+	_notify("RESERVA REGISTRADA", "%s · %s (%s). O livro está marcado na loja para comprar no fechamento." % [customer.customer_name, title, str(BookCatalog.get_condition(condition).label)], "success")
+	dialogue_panel.show_message(customer.customer_name, "Pode reservar %s para mim? Volto em outra visita para buscar. Obrigado!" % title)
+	customer.served = true
+	customer.set_selected(false)
+	customer.visible = false
+	day_customers_served += 1
+	active_overlay = null
+	screen.queue_free()
+	day_manager.customer_completed()
+	_update_status()
 
 func _handle_stock_action(book_id: String, condition: String, action: String, screen: InventoryScreen) -> void:
 	if active_overlay != screen or not store_is_open or not customer.visible or inventory.get_condition_quantity(book_id, condition) <= 0:
@@ -613,28 +650,52 @@ func _complete_stock_action(book: Dictionary, result: Dictionary, screen: Contro
 	_update_status()
 
 
+func _combined_merchant_offers() -> Dictionary:
+	var combined: Dictionary = {}
+	for supplier_id in supplier_markets:
+		var market: Dictionary = supplier_markets[supplier_id]
+		for book_id in market:
+			var offer: Dictionary = market[book_id]
+			var entry: Dictionary = combined.get(book_id, {"quantity": 0, "conditions": {}})
+			var conditions: Dictionary = offer.get("conditions", {})
+			for condition in conditions:
+				var available: Dictionary = conditions[condition]
+				var quantity := int(available.get("quantity", 0))
+				if quantity <= 0:
+					continue
+				entry.quantity += quantity
+				var best: Dictionary = entry.conditions.get(condition, {})
+				var total := quantity + int(best.get("quantity", 0))
+				var price := int(available.get("price", 0))
+				var risk := float(offer.get("risk", 0.0))
+				if best.is_empty() or price < int(best.price) or (price == int(best.price) and risk < float(best.risk)):
+					best = {"price": price, "supplier_id": str(supplier_id), "risk": risk}
+				best["quantity"] = total
+				entry.conditions[condition] = best
+			combined[book_id] = entry
+	return combined
+
 func _show_shop(summary: DaySummaryScreen = null) -> void:
 	if active_overlay != null and active_overlay != summary: return
 	if supplier_markets.is_empty(): _prepare_supplier_markets()
 	if not store_is_open:
 		_save_checkpoint()
-	merchant_offers = supplier_markets.get(selected_supplier_id, {})
+	merchant_offers = _combined_merchant_offers()
 	if summary != null:
 		summary.visible = false
 	var screen := MerchantScreen.new()
 	$UI.add_child(screen)
 	active_overlay = screen
-	screen.setup(inventory, merchant_offers, money, summary != null or not store_is_open, supplier_profiles, selected_supplier_id)
-	screen.supplier_selected.connect(func(supplier_id: String) -> void:
-		selected_supplier_id = supplier_id
-		merchant_offers = supplier_markets.get(selected_supplier_id, {})
-		screen.set_market(merchant_offers, selected_supplier_id, money)
-		if not store_is_open:
-			_save_checkpoint()
-	)
+	screen.setup(inventory, merchant_offers, money, summary != null or not store_is_open, _shop_reservations())
 	screen.purchase_requested.connect(func(book_id: String, condition: String) -> void:
+		if active_overlay != screen: return
+		merchant_offers = _combined_merchant_offers()
+		var best: Dictionary = merchant_offers.get(book_id, {}).get("conditions", {}).get(condition, {})
+		if best.is_empty(): return
+		var supplier_id := str(best.supplier_id)
+		var market: Dictionary = supplier_markets.get(supplier_id, {})
 		var book := BookCatalog.get_book(book_id)
-		var offer: Dictionary = merchant_offers.get(book_id, {})
+		var offer: Dictionary = market.get(book_id, {})
 		var condition_stock: Dictionary = offer.get("conditions", {})
 		var condition_offer: Dictionary = condition_stock.get(condition, {})
 		var purchase_price := int(condition_offer.get("price", BookCatalog.price_for_condition(book, condition, "buy_price")))
@@ -644,16 +705,19 @@ func _show_shop(summary: DaySummaryScreen = null) -> void:
 		condition_stock[condition] = condition_offer
 		offer["conditions"] = condition_stock
 		offer["quantity"] = maxi(0, int(offer.get("quantity", 0)) - 1)
-		merchant_offers[book_id] = offer
-		supplier_markets[selected_supplier_id] = merchant_offers
+		market[book_id] = offer
+		supplier_markets[supplier_id] = market
+		selected_supplier_id = supplier_id
 		var actual_condition := condition
 		if randf() < float(offer.get("risk", 0.0)):
 			actual_condition = "danificado"
 			_notify("LOTE AVARIADO", "O fornecedor entregou %s em condição danificada." % str(book.get("title", "Livro")), "warning")
 		inventory.add(book_id, 1, actual_condition, purchase_price)
-		progression.record_purchase(selected_supplier_id)
+		progression.record_purchase(supplier_id)
 		_notify_new_achievements()
 		_update_status()
+		merchant_offers = _combined_merchant_offers()
+		screen.offers = merchant_offers
 		screen.refresh(money)
 		_save_checkpoint()
 	)
@@ -992,7 +1056,8 @@ func _create_customer_order(last_book_id: String) -> void:
 			candidates.append(book)
 	var book_id := last_book_id if candidates.is_empty() else str(candidates.pick_random().id)
 	var condition := str(customer.profile_data.get("preferred_condition", "novo"))
-	world.create_order(str(customer.profile_data.id), book_id, condition)
+	if not world.create_order(str(customer.profile_data.id), book_id, condition):
+		return
 	_notify("ENCOMENDA PARA A PRÓXIMA VISITA", "%s reservou %s (%s). Consulte o Caderno de leitores no fechamento." % [customer.customer_name, str(BookCatalog.get_book(book_id).title), str(BookCatalog.get_condition(condition).label)], "info")
 
 func _load_api_catalog() -> void:

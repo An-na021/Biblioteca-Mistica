@@ -95,6 +95,15 @@ func get_request_clue() -> Dictionary:
 func can_accept_book(book_id: String) -> bool:
 	return acceptable_book_ids.has(book_id)
 
+func can_reserve(inventory: Inventory) -> bool:
+	if served or requested_book_id.is_empty():
+		return false
+	var condition := str(profile_data.get("preferred_condition", "novo"))
+	for book_id in acceptable_book_ids:
+		if inventory.get_condition_quantity(book_id, condition) > 0:
+			return false
+	return inventory.get_condition_quantity(requested_book_id, condition) == 0
+
 func traits() -> Dictionary:
 	return World.get_traits(str(profile_data.get("mood_type", "indeciso")))
 

@@ -1,4 +1,4 @@
-﻿# Biblioteca
+# Biblioteca
 
 Jogo em Godot 4 sobre administrar uma livraria aconchegante, descobrir as leituras dos clientes e planejar a reposição das estantes.
 
@@ -16,6 +16,7 @@ O projeto também possui uma **API REST com SQLite e CRUD de livros, clientes e 
 - Clique na prancheta azul do balcão para abrir o estoque. A pista e a condição preferida aparecem acima da lista.
 - Busque por título ou autor, com ou sem acentos. Combine filtros de tema e condição; **Limpar** restaura a lista completa.
 - Escolha a condição do exemplar e use **Entregar**, **Negociar** ou **Oferecer**. O tempo continua correndo durante a consulta ao estoque no modo normal.
+- Quando não houver exemplares que atendam ao pedido na condição solicitada, use **Reservar livro** no estoque. O atendimento termina sem perda de reputação e o leitor volta para buscar o pedido em outra visita.
 - Clique na porta para encerrar o expediente. Se houver um cliente na loja, será preciso confirmar a saída, com perda de reputação.
 - Use **Esc** ou **Pausa** para suspender o jogo, inclusive a paciência e os intervalos entre clientes. Esc também retoma a partida; feche a ficha pelo botão ×.
 
@@ -41,7 +42,7 @@ O salvamento automático usa `user://biblioteca_save.json`, na pasta de dados do
 - Pedidos por título, autor ou pistas de temas.
 - Oito livros, com exemplares novos, usados, danificados ou raros.
 - Três a quatro clientes por dia, conforme o bairro, sem repetição no mesmo dia. Intervalos de três a seis segundos e aviso final de cinco segundos.
-- Três fornecedores com preços, estoques e riscos de avaria diferentes, acessíveis pelo carrinho no fechamento de cada dia.
+- Uma lista única de livros para comprar pelo carrinho no fechamento de cada dia. A loja reúne as ofertas dos três fornecedores e usa o menor preço disponível para cada condição.
 - Três bairros com catálogos e clientes diferentes, desbloqueados por dia ou reputação.
 - Metas diárias e semanais, conquistas e resumo de vendas, lucro e reputação.
 
@@ -83,6 +84,8 @@ Cada um dos oito leitores tem uma história em três compras e lembra a última 
 
 Depois da primeira compra, o leitor deixa uma encomenda para a próxima visita. Consulte o título e a condição em **Livraria → Caderno de leitores**. O Mercador da Praça inclui exemplares das encomendas pendentes em suas ofertas; o risco de avaria do fornecedor continua valendo. Entregar o título na condição combinada concede quatro moedas extras uma única vez. A encomenda permanece pendente se o cliente comprar outra leitura ou sair sem comprar.
 
+Clientes também podem reservar um pedido sem estoque antes da primeira compra. No fechamento, a loja mostra todos os livros em uma única lista, sem abas ou seleção de fornecedor. Cada linha traz capa, título, autor, estoque, condição e botão de compra com o preço. Uma indicação junto ao livro informa quem reservou, a condição e quantos exemplares faltam; após a compra, aparece **Pronto para entregar**. A reserva só é concluída ao entregar o exemplar ao leitor. As ofertas de todos os fornecedores são reunidas automaticamente, usando o menor preço disponível para a condição escolhida; em caso de empate, vale o menor risco de avaria. Livros sem ofertas continuam visíveis como **Indisponível hoje**. O fornecedor de encomendas consegue as reservas mesmo fora do bairro. Reservas são salvas na abertura e no fechamento, junto às demais encomendas.
+
 Memórias, encomendas e melhorias são salvas nos mesmos pontos de abertura e fechamento dos dias. Salvamentos anteriores a esses sistemas continuam compatíveis. Os presentes das histórias e encomendas aumentam o saldo, separados do lucro das vendas de livros.
 
 O resumo distingue **erros de atendimento** (tentativas recusadas e saídas sem compra) de **clientes sem venda**. A meta de dia sem erros usa o primeiro indicador.
@@ -107,6 +110,8 @@ Execute, usando o caminho do seu executável do Godot:
 ```text
 godot --headless --path . --script tests/test_game.gd --log-file .godot/tests.log
 godot --headless --path . --script tests/test_world.gd --log-file .godot/world_tests.log
+godot --headless --path . --script tests/test_reservations.gd --log-file .godot/reservations_tests.log
+godot --headless --path . --script tests/test_shop_list.gd --log-file .godot/shop_list_tests.log
 ```
 
 Os testes usam salvamentos temporários dentro de `.godot`, sem modificar o progresso do jogador. Cobrem menus, pausa, modo tranquilo, busca, filtros, contagem de erros, compras, persistência, personalidades, recomendações, negociação, melhorias, eventos, encomendas, recompensas únicas, vários dias completos e leitura de arquivo corrompido.
@@ -116,6 +121,7 @@ Para gerar capturas das telas durante a mesma verificação:
 ```text
 godot --path . --script tests/test_game.gd --log-file .godot/visual_tests.log -- --screenshots
 godot --path . --script tests/test_world.gd --log-file .godot/world_visual_tests.log -- --screenshots
+godot --path . --script tests/test_reservations.gd --log-file .godot/reservations_visual_tests.log -- --screenshots
 ```
 
 As imagens ficam em `.godot/preview_*.png`.

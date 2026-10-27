@@ -5,6 +5,7 @@ signal closed
 signal deliver_requested(book_id: String, condition: String)
 signal negotiate_requested(book_id: String, condition: String)
 signal offer_requested(book_id: String, condition: String)
+signal reservation_requested
 
 class NotebookLines extends Control:
 	func _ready() -> void:
@@ -40,6 +41,7 @@ var book_list: VBoxContainer
 var results_label: Label
 var time_label: Label
 var current_customer: Customer
+var reserve_button: Button
 
 func setup(value: Inventory, value_request_clue: Dictionary = {}, value_has_active_customer := false, value_preferred_condition := "", value_customer: Customer = null) -> void:
 	inventory = value
@@ -121,6 +123,21 @@ func build() -> void:
 		layout.add_child(preference_label)
 		if current_customer != null:
 			preference_label.text += " · " + str(current_customer.traits().label) + " · até %d sugestões recusadas" % current_customer.offer_limit()
+			if current_customer.can_reserve(inventory):
+				var reservation_row := HBoxContainer.new()
+				reservation_row.add_theme_constant_override("separation", 10)
+				layout.add_child(reservation_row)
+				var unavailable := _make_label("SEM ESTOQUE PARA O PEDIDO · Reserve para a próxima visita, sem perder reputação.", 12, TEXT_PRIMARY)
+				unavailable.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				unavailable.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				reservation_row.add_child(unavailable)
+				reserve_button = Button.new()
+				reserve_button.text = "RESERVAR LIVRO"
+				reserve_button.custom_minimum_size = Vector2(180, 36)
+				_style_button(reserve_button, true)
+				reserve_button.tooltip_text = "Registrar o pedido e encerrar o atendimento. O livro aparecerá nas reservas da loja para comprar."
+				reserve_button.pressed.connect(func() -> void: reservation_requested.emit())
+				reservation_row.add_child(reserve_button)
 
 	var filters := HBoxContainer.new()
 	filters.add_theme_constant_override("separation", 8)
@@ -169,7 +186,7 @@ func build() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size.y = 280
+	scroll.custom_minimum_size.y = 180
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	layout.add_child(scroll)
 

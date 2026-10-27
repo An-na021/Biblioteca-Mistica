@@ -103,19 +103,35 @@ func record_purchase(customer_id: String, book_id: String, condition := "") -> D
 		order_reward = 4
 	return {"text": story_text(customer_id), "reward": reward + order_reward, "story_reward": reward, "order_reward": order_reward, "chapter": mini(before + 1, 3)}
 
-func create_order(customer_id: String, book_id: String, condition: String) -> void:
+func create_order(customer_id: String, book_id: String, condition: String) -> bool:
 	var entry: Dictionary = memories.get(customer_id, {})
-	if bool(entry.get("order_created", false)):
-		return
+	if bool(entry.get("order_created", false)) or entry.has("order"):
+		return false
 	entry["order_created"] = true
 	entry["order"] = {"book_id": book_id, "condition": condition}
 	memories[customer_id] = entry
+	return true
+
+func reserve_book(customer_id: String, book_id: String, condition: String) -> bool:
+	if customer_id.is_empty() or BookCatalog.get_book(book_id).is_empty() or not BookCatalog.CONDITIONS.has(condition):
+		return false
+	var entry: Dictionary = memories.get(customer_id, {})
+	var existing: Dictionary = entry.get("order", {})
+	if not existing.is_empty() and (str(existing.book_id) != book_id or str(existing.condition) != condition):
+		return false
+	entry["order"] = {"book_id": book_id, "condition": condition}
+	entry["last_outcome"] = "reserved"
+	memories[customer_id] = entry
+	return true
 
 func pending_orders() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for entry in memories.values():
+	for customer_id in memories:
+		var entry: Dictionary = memories[customer_id]
 		if entry.has("order"):
-			result.append(entry.order.duplicate(true))
+			var order: Dictionary = entry.order.duplicate(true)
+			order["customer_id"] = str(customer_id)
+			result.append(order)
 	return result
 
 func story_text(customer_id: String) -> String:
