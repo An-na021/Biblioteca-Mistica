@@ -1,5 +1,9 @@
 extends Node2D
 
+const PLANT_TEXTURE: Texture2D = preload("res://IMG/planta_balcao.png")
+const PLANT_SIZE := Vector2(152, 152)
+const PLANT_BASE := Vector2(980, 635)
+
 var upgrades: Dictionary = {}
 
 func update_state(value: Dictionary) -> void:
@@ -37,24 +41,8 @@ func _draw() -> void:
 					draw_line(spine.position + Vector2(5, 15 + engraving * 4), spine.position + Vector2(9, 15 + engraving * 4), Color("bda673"), 0.7)
 			draw_rect(Rect2(1072, baseline, 144, 6), gold.darkened(0.25))
 	if upgrades.has("plants"):
-		var base := Vector2(980, 609)
-		draw_set_transform(base + Vector2(0, 12), 0.0, Vector2(1.0, 0.24))
-		draw_circle(Vector2.ZERO, 44.0, Color(0, 0, 0, 0.4))
+		draw_set_transform(PLANT_BASE, 0.0, Vector2(1.0, 0.24))
+		draw_circle(Vector2.ZERO, 30.0, Color(0, 0, 0, 0.4))
 		draw_set_transform(Vector2.ZERO)
-		for index in range(7):
-			var tip := base + Vector2((index - 3) * 13, -54 - (index % 3) * 17)
-			draw_line(base, tip, Color("69815c"), 3, true)
-			var direction := (tip - base).normalized()
-			var side := direction.orthogonal()
-			var leaf := PackedVector2Array()
-			for vertex in range(16):
-				var angle := TAU * float(vertex) / 16.0
-				leaf.append(tip + direction * cos(angle) * 20.0 + side * sin(angle) * 8.0)
-			draw_colored_polygon(leaf, Color("718a5e") if index % 2 == 0 else Color("4d674a"))
-			draw_line(tip - direction * 16.0, tip + direction * 16.0, Color("9aab77"), 1.0, true)
-			if index % 3 == 0:
-				draw_circle(tip + Vector2(0, -8), 5.0, Color("d2aa83"))
-		draw_colored_polygon(PackedVector2Array([base + Vector2(-29, -7), base + Vector2(29, -7), base + Vector2(22, 26), base + Vector2(-22, 26)]), Color("855338"))
-		draw_colored_polygon(PackedVector2Array([base + Vector2(12, -7), base + Vector2(29, -7), base + Vector2(22, 26), base + Vector2(12, 26)]), Color("63402c"))
-		draw_rect(Rect2(base + Vector2(-32, -12), Vector2(64, 10)), Color("b07b50"))
-		draw_line(base + Vector2(-18, 4), base + Vector2(18, 4), Color("d6b37a"), 2.0)
+		var top_left := PLANT_BASE - Vector2(PLANT_SIZE.x * 0.5, PLANT_SIZE.y)
+		draw_texture_rect(PLANT_TEXTURE, Rect2(top_left, PLANT_SIZE), false)
