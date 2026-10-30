@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://IMG/curators_picks_reference.jpg" id="1"]
+[ext_resource type="Texture2D" path="res://IMG/counter_without_sign.png" id="2"]
+
+[node name="CounterNewspaper" type="Node2D"]
+
+[node name="SignCleanup" type="Polygon2D" parent="."]
+texture_filter = 2
+position = Vector2(-3, 1)
+scale = Vector2(0.76555, 0.765143)
+texture = ExtResource("2")
+polygon = PackedVector2Array(307, 647, 443, 634, 468, 760, 512, 775, 512, 800, 335, 806, 316, 787)
+uv = PackedVector2Array(307, 647, 443, 634, 468, 760, 512, 775, 512, 800, 335, 806, 316, 787)
+
+[node name="OriginalNewspaper" type="Polygon2D" parent="."]
+texture_filter = 2
+position = Vector2(-116, -18)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1")
+polygon = PackedVector2Array(638, 1395, 655, 1366, 871, 1078, 886, 1076, 1168, 1115, 1173, 1122, 1012, 1459, 1002, 1464, 916, 1452, 901, 1456, 882, 1446, 758, 1425, 671, 1409)
+uv = PackedVector2Array(638, 1395, 655, 1366, 871, 1078, 886, 1076, 1168, 1115, 1173, 1122, 1012, 1459, 1002, 1464, 916, 1452, 901, 1456, 882, 1446, 758, 1425, 671, 1409)

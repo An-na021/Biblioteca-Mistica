@@ -10,6 +10,9 @@ const NegotiationUI = preload("res://scripts/negotiation_screen.gd")
 const LivrariaUI = preload("res://scripts/livraria_screen.gd")
 const ShopDecorUI = preload("res://scripts/shop_decor.gd")
 const CatalogAPI = preload("res://scripts/catalog_api.gd")
+const ClockScreen = preload("res://scenes/clock_screen.tscn")
+const ClockScreenUI = preload("res://scripts/clock_screen.gd")
+const NewspaperScreenScene = preload("res://scenes/newspaper_screen.tscn")
 
 const CUSTOMER_PROFILES: Array[Dictionary] = [
 	{
@@ -190,7 +193,7 @@ func _ready() -> void:
 	notifications = NotificationPanel.new()
 	$UI.add_child(notifications)
 	for interactable in get_tree().get_nodes_in_group("interactables"): _connect_interactable(interactable)
-	for interactable in [$Door, $Window, $Lamp, $Clipboard]: _connect_interactable(interactable)
+	for interactable in [$Door, $Window, $Lamp, $Clipboard, $Clock, $NewspaperHotspot]: _connect_interactable(interactable)
 	mood_timer = MoodTimerUI.new() as Control
 	$UI.add_child(mood_timer)
 	mood_timer.hide()
@@ -200,6 +203,9 @@ func _ready() -> void:
 	shop_decor = ShopDecorUI.new()
 	shop_decor.z_index = 1
 	add_child(shop_decor)
+	# Put the original shelf/table before the counter; plants stay above it.
+	shop_decor.shelf.reparent(self)
+	move_child(shop_decor.shelf, $CounterForeground.get_index())
 	var event_panel := PanelContainer.new()
 	event_panel.position = Vector2(16, 138)
 	event_panel.custom_minimum_size.x = 650.0
@@ -245,6 +251,9 @@ func _ready() -> void:
 		_load_api_catalog()
 
 func _process(delta: float) -> void:
+	# Inspection screens suspend service, arrivals and the end-of-day notice.
+	if active_overlay is ClockScreenUI or active_overlay is NewspaperScreen:
+		return
 	day_manager.tick(delta)
 	var customer_active := store_is_open and customer != null and is_instance_valid(customer) and customer.visible
 	if mood_timer != null:
@@ -296,9 +305,39 @@ func _on_interactable_clicked(interactable: Interactable) -> void:
 			_show_customer_profile()
 		"clipboard": _open_inventory()
 		"door": _request_store_closure()
+		"clock": _open_clock()
+		"newspaper": _open_newspaper()
 		"window", "lamp": dialogue_panel.show_message(interactable.interaction_name, interactable.description)
 		_: dialogue_panel.show_message(interactable.interaction_name, interactable.description)
 
+
+func _open_clock() -> void:
+	if active_overlay != null or not game_menu.in_game or get_tree().paused:
+		return
+	var screen := ClockScreen.instantiate()
+	active_overlay = screen
+	$UI.hide()
+	game_menu.hide()
+	add_child(screen)
+	screen.closed.connect(func() -> void:
+		active_overlay = null
+		$UI.show()
+		game_menu.show()
+	)
+
+func _open_newspaper() -> void:
+	if active_overlay != null or not game_menu.in_game or get_tree().paused:
+		return
+	var screen := NewspaperScreenScene.instantiate() as NewspaperScreen
+	active_overlay = screen
+	$UI.hide()
+	game_menu.hide()
+	add_child(screen)
+	screen.closed.connect(func() -> void:
+		active_overlay = null
+		$UI.show()
+		game_menu.show()
+	)
 
 func _show_customer_profile() -> void:
 	if customer == null or not customer.visible:

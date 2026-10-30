@@ -15,7 +15,7 @@ var _glow_tween: Tween
 var _selection_strength := 0.0
 var _selection_tween: Tween
 
-const GLOW_INTERACTION_TYPES := ["clipboard", "lamp", "window", "door", "customer"]
+const GLOW_INTERACTION_TYPES := ["clipboard", "lamp", "window", "door", "customer", "clock"]
 
 func _ready() -> void:
 	_base_scale = scale

@@ -1,7 +1,7 @@
 78098b89c88a74ebe8c20117b8754620
-::res://::1793127059
+::res://::1793377640
 icon.svg::CompressedTexture2D::5473069714492834225::1791497625::1791500133::1::::<><><>0<>0<>dd473c37ac427e00a85e8017f4f13148<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
-README.md::TextFile::-1::1793129265::0::1::::<><><>0<>0<><>::
+README.md::TextFile::-1::1793400448::0::1::::<><><>0<>0<><>::
 ::res://api/::1793113128
 README.md::TextFile::-1::1793120302::0::1::::<><><>0<>0<><>::
 requirements-dev.txt::TextFile::-1::1793112743::0::1::::<><><>0<>0<><>::
@@ -20,9 +20,16 @@ percy.png::CompressedTexture2D::7696013763115059942::1791497627::1791497627::1::
 pother.png::CompressedTexture2D::4307495970870133618::1791497627::1791497627::1::::<><><>0<>0<>a9d90fff32e1371d30d31c16dfefbce4<>res://.godot/imported/pother.png-ebf54e647550d39ff514896e3354be2d.ctex::
 reino_vidro.png::CompressedTexture2D::8581849359702469057::1791565681::1791566113::1::::<><><>0<>0<>f04be6c6f5975e5529a4116459130915<>res://.godot/imported/reino_vidro.png-a9c1e4545f03bd9c4fa8f890113c5d42.ctex::
 relogio_perdido.png::CompressedTexture2D::4806798525980761534::1791565681::1791566113::1::::<><><>0<>0<>267de4e31d74e0b9af5b9205ca61c098<>res://.godot/imported/relogio_perdido.png-6e1d11811795159eb01a6a359225fe09.ctex::
-::res://IMG/::1793139038
+::res://IMG/::1793400492
 Backgroud.png::CompressedTexture2D::1765152142450717135::1791497626::1791497626::1::::<><><>0<>0<>c8d0b1b99188dd70467cd3bdf2a7b83d<>res://.godot/imported/Backgroud.png-b17cf8b650971bb8353dcc068dc26a22.ctex::
-planta_balcao.png::CompressedTexture2D::1534474427947723089::1793112193::1793139057::1::::<><><>0<>0<>af37e2b061b6358f28080bacb14562e2<>res://.godot/imported/planta_balcao.png-0eff8054ab48da96ab38abee5906b82f.ctex::
+counter_newspaper.md::TextFile::-1::1793398918::0::1::::<><><>0<>0<><>::
+counter_without_sign.png::CompressedTexture2D::8623057723622566261::1793398791::1793399015::1::::<><><>0<>0<>18b2b62c0c1d966182b461d69e4082b0<>res://.godot/imported/counter_without_sign.png-c852dfbaf89e263297441f34db9cfc37.ctex::
+curators_picks_reference.jpg::CompressedTexture2D::5492793298559031229::1793398508::1793399016::1::::<><><>0<>0<>e61224e34849d54305e29f0b215099e1<>res://.godot/imported/curators_picks_reference.jpg-775d8e3a5a1ea63f5dbb320d775aadc9.ctex::
+estante_curadoria.md::TextFile::-1::1793388337::0::1::::<><><>0<>0<><>::
+estante_curadoria.png::CompressedTexture2D::3171970665564138644::1793386153::1793387243::1::::<><><>0<>0<>afb63f19ceb277a3dd5c1c5f49de00d3<>res://.godot/imported/estante_curadoria.png-ef8707e16d391e76f02f96ac9512b71b.ctex::
+estante_curadoria_original.jpg::CompressedTexture2D::2433906530582185990::1793385762::1793388462::1::::<><><>0<>0<>0b04ff78120f853d6e086e6075934e31<>res://.godot/imported/estante_curadoria_original.jpg-a6d23277962c3124808fd70c8331d43f.ctex::
+newspaper_open.png::CompressedTexture2D::7030739902034887575::1793400186::1793400868::1::::<><><>0<>0<>6e007ad3f741509eae23861a7f57559f<>res://.godot/imported/newspaper_open.png-53e0311e1db891d5729db6583feff44f.ctex::
+planta_balcao.png::CompressedTexture2D::1534474427947723089::1793112193::1793213606::1::::<><><>0<>0<>af37e2b061b6358f28080bacb14562e2<>res://.godot/imported/planta_balcao.png-0eff8054ab48da96ab38abee5906b82f.ctex::
 ::res://IMG/characters/::1792000100
 anao_guerreiro.png::CompressedTexture2D::4398801170333425501::1790531475::1791502593::1::::<><><>0<>0<>5616a3ea83c1ccaccc5b0d351479f13f<>res://.godot/imported/anao_guerreiro.png-08cf88f0bbc2fbdff210a96c94fe34f6.ctex::
 elfa.png::CompressedTexture2D::4085514087887962531::1790531475::1791502593::1::::<><><>0<>0<>48e81854311d10165575427774a2bc63<>res://.godot/imported/elfa.png-e90603edf3ed61545ef568f46548a192.ctex::
@@ -32,8 +39,14 @@ Lilith Vespera.png::CompressedTexture2D::4450433556199417343::1791999057::179200
 mago_anciao.png::CompressedTexture2D::7216742614114724622::1790531475::1791502593::1::::<><><>0<>0<>83d2546ade532af3d0b6728aa189736c<>res://.godot/imported/mago_anciao.png-83b63ab378f8b63c20a3256c3e525c2c.ctex::
 Professor Bigodes.png::CompressedTexture2D::7402164924906863884::1791999134::1792000100::1::::<><><>0<>0<>cb008c8ac5c77401990385d3229b4333<>res://.godot/imported/Professor Bigodes.png-828c293ac59e51eccff53773d2919cf8.ctex::
 Thalion Grimório.png::CompressedTexture2D::1187333005258057293::1791999106::1792000100::1::::<><><>0<>0<>070f97f4e0c1863676473e9c946c66ae<>res://.godot/imported/Thalion Grimório.png-3a1c430a6a0b34fa03dbd94ac048a69c.ctex::
-::res://scenes/::1791502198
-main.tscn::PackedScene::2876197167270005196::1793106597::0::1::::<><><>0<>0<><>::uid://lu37kjvuo1m5::::res://scripts/main_game.gd<>uid://bxv11porfccx6::::res://scripts/interactable.gd<>uid://k3xi8s55612f::::res://scripts/dialogue_panel.gd<>uid://0fb2emo0vxdv::::res://IMG/Backgroud.png
+::res://IMG/clock/::1793384857
+clock_without_hands.png::CompressedTexture2D::5030699232007143411::1793384730::1793384857::1::::<><><>0<>0<>aa719c268f83715fd33f5845f128e088<>res://.godot/imported/clock_without_hands.png-031e21d3b0ea2c56672399a6bc106729.ctex::
+README.md::TextFile::-1::1793384838::0::1::::<><><>0<>0<><>::
+::res://scenes/::1793400432
+clock.tscn::PackedScene::-1::1793384831::0::1::::<><><>0<>0<><>::
+clock_screen.tscn::PackedScene::-1::1793384835::0::1::::<><><>0<>0<><>::
+main.tscn::PackedScene::2876197167270005196::1793400436::0::1::::<><><>0<>0<><>::uid://lu37kjvuo1m5::::res://scripts/main_game.gd<>uid://bxv11porfccx6::::res://scripts/interactable.gd<>uid://k3xi8s55612f::::res://scripts/dialogue_panel.gd<>uid://0fb2emo0vxdv::::res://IMG/Backgroud.png
+newspaper_screen.tscn::PackedScene::-1::1793400432::0::1::::<><><>0<>0<><>::
 ::res://scenes/characters/::1792002835
 anao.tscn::PackedScene::-1::1792010700::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/anao_guerreiro.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
 aprendiz.tscn::PackedScene::-1::1792103892::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/jovem_mago.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
@@ -43,10 +56,15 @@ lilith_vespera.tscn::PackedScene::-1::1792083524::0::1::::<><><>0<>0<><>::res://
 mago.tscn::PackedScene::-1::1792104369::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/mago_anciao.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
 professor_bigodes.tscn::PackedScene::-1::1792083524::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/Professor Bigodes.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
 thalion_grimorio.tscn::PackedScene::-1::1792083524::0::1::::<><><>0<>0<><>::res://scripts/customer.gd<>res://IMG/characters/Thalion Grimório.png<>res://shaders/customer_atmosphere.gdshader<>res://shaders/customer_shadow.gdshader
-::res://scripts/::1793112684
+::res://scenes/decor/::1793398857
+counter_newspaper.tscn::PackedScene::-1::1793398916::0::1::::<><><>0<>0<><>::
+curation_shelf.tscn::PackedScene::-1::1793388331::0::1::::<><><>0<>0<><>::res://IMG/estante_curadoria_original.jpg
+::res://scripts/::1793400491
 book.gd::GDScript::486993141782667155::1791497627::0::1::::Book<>Interactable<><>0<>0<><>::
 book_catalog.gd::GDScript::6020919062269309548::1793112639::0::1::::BookCatalog<>RefCounted<><>0<>0<><>::
 catalog_api.gd::GDScript::3217104497917976263::1793112637::0::1::::<>Node<><>0<>0<><>::
+clock_hands.gd::GDScript::6692311666924910862::1793384828::0::1::::<>Node2D<><>0<>0<><>::
+clock_screen.gd::GDScript::4153283925031540399::1793384833::0::1::::<>CanvasLayer<><>0<>0<><>::
 customer.gd::GDScript::930092272971054051::1793127416::0::1::::Customer<>Interactable<><>0<>0<><>::
 customer_profile_panel.gd::GDScript::2644388741581268849::1793109613::0::1::::CustomerProfilePanel<>Control<><>0<>0<><>::
 day_manager.gd::GDScript::73078135164781612::1793112641::0::1::::DayManager<>RefCounted<><>0<>0<><>::
@@ -54,27 +72,30 @@ day_summary_screen.gd::GDScript::8331424866487560210::1793109429::0::1::::DaySum
 dialogue_panel.gd::GDScript::761103553160301851::1791497627::0::1::::DialoguePanel<>Control<><>0<>0<><>::
 district_screen.gd::GDScript::7935645219186011896::1792179584::0::1::::DistrictScreen<>Control<><>0<>0<><>::
 game_menu.gd::GDScript::8692957589740439114::1793107058::0::1::::<>CanvasLayer<><>0<>0<><>::
-interactable.gd::GDScript::4045741902913236149::1791567707::0::1::::Interactable<>Area2D<><>0<>0<><>::
+interactable.gd::GDScript::4045741902913236149::1793384842::0::1::::Interactable<>Area2D<><>0<>0<><>::
 inventory.gd::GDScript::5593779716877303886::1792179310::0::1::::Inventory<>RefCounted<><>0<>0<><>::
 inventory_screen.gd::GDScript::8432068070373816337::1793127557::0::1::::InventoryScreen<>Control<><>0<>0<><>::
 livraria_screen.gd::GDScript::2371303163882786565::1793112643::0::1::::<>Control<><>0<>0<><>::
 main.gd::GDScript::8996122104514749359::1791497627::0::1::::<>Node2D<><>0<>0<><>::
-main_game.gd::GDScript::815122596420161966::1793129177::0::1::::<>Node2D<><>0<>0<><>::
+main_game.gd::GDScript::815122596420161966::1793400819::0::1::::<>Node2D<><>0<>0<><>::
 merchant_screen.gd::GDScript::7724171913186753593::1793129186::0::1::::MerchantScreen<>Control<><>0<>0<><>::
 mood_timer.gd::GDScript::1824476574961350591::1793106593::0::1::::MoodTimer<>Control<><>0<>0<><>::
 negotiation_screen.gd::GDScript::6442080941522377368::1793109838::0::1::::<>Control<><>0<>0<><>::
+newspaper_screen.gd::GDScript::1379233846596324652::1793400673::0::1::::NewspaperScreen<>CanvasLayer<><>0<>0<><>::
 notification_panel.gd::GDScript::1724242537035863746::1793109522::0::1::::NotificationPanel<>Control<><>0<>0<><>::
 progression_manager.gd::GDScript::7109599717004551373::1792179483::0::1::::ProgressionManager<>RefCounted<><>0<>0<><>::
 save_game.gd::GDScript::2139788943740260313::1793113026::0::1::::<>RefCounted<><>0<>0<><>::
-shop_decor.gd::GDScript::2447822992299603003::1793139043::0::1::::<>Node2D<><>0<>0<><>::
+shop_decor.gd::GDScript::2447822992299603003::1793388333::0::1::::<>Node2D<><>0<>0<><>::
 shop_screen.gd::GDScript::1793892256435292553::1793109958::0::1::::<>Control<><>0<>0<><>::
 shop_world.gd::GDScript::4337780256318809197::1793127639::0::1::::<>RefCounted<><>0<>0<><>::
 ::res://shaders/::1791503034
 customer_atmosphere.gdshader::Shader::1303064365930924988::1791502943::0::1::::<><><>0<>0<><>::
 customer_shadow.gdshader::Shader::825600638396690434::1791502971::0::1::::<><><>0<>0<><>::
-::res://tests/::1793129639
+::res://tests/::1793400491
 test_catalog_api.gd::GDScript::7030409753000642135::1793112861::0::1::::<>SceneTree<><>0<>0<><>::
+test_clock.gd::GDScript::6470254615791351766::1793384906::0::1::::<>SceneTree<><>0<>0<><>::
 test_game.gd::GDScript::4863085981205210252::1793112644::0::1::::<>SceneTree<><>0<>0<><>::
+test_newspaper.gd::GDScript::4425544982238475137::1793400821::0::1::::<>SceneTree<><>0<>0<><>::
 test_reservations.gd::GDScript::1916466905683533480::1793129228::0::1::::<>SceneTree<><>0<>0<><>::
 test_shop_list.gd::GDScript::3720497215339031809::1793129264::0::1::::<>SceneTree<><>0<>0<><>::
 test_world.gd::GDScript::5791734021701819117::1793112646::0::1::::<>SceneTree<><>0<>0<><>::

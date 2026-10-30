@@ -12,6 +12,9 @@ O projeto também possui uma **API REST com SQLite e CRUD de livros, clientes e 
 
 ## Controles e atendimento
 
+- Clique no relógio da parede para abrir uma cena exclusiva com o relógio ampliado. Os três ponteiros acompanham o horário local do computador, com movimento contínuo e avanço proporcional das horas e minutos. **Voltar** ou **Esc** retorna à livraria. O atendimento, a chegada de clientes e o fechamento ficam suspensos durante a consulta. O relógio da parede também funciona no modo tranquilo.
+- Clique no jornal **Curator's Picks** sobre o balcão para abri-lo em tela ampliada. **Voltar** ou **Esc** retorna à livraria, com o atendimento suspenso durante a leitura.
+
 - Clique no cliente para consultar a pista do pedido, os temas favoritos e a condição preferida. O tempo fica suspenso enquanto a ficha está aberta.
 - Clique na prancheta azul do balcão para abrir o estoque. A pista e a condição preferida aparecem acima da lista.
 - Busque por título ou autor, com ou sem acentos. Combine filtros de tema e condição; **Limpar** restaura a lista completa.
@@ -104,6 +107,14 @@ O resumo distingue **erros de atendimento** (tentativas recusadas e saídas sem 
 - `IMG/`, `bookimg/` e `shaders/`: arte e tratamento visual.
 
 ## Verificação
+
+Para verificar a interação do relógio, o horário real, os ponteiros, o retorno e o redimensionamento:
+
+```text
+godot --headless --path . --script tests/test_clock.gd --log-file .godot/clock_tests.log
+```
+
+Acrescente `-- --screenshots` e execute sem `--headless` para salvar as prévias em `.godot/preview_clock*.png`. A cena `scenes/clock_screen.tscn` também pode ser aberta diretamente no editor com **F6**.
 
 Execute, usando o caminho do seu executável do Godot:
 

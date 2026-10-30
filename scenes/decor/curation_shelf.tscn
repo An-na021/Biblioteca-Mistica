@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://IMG/estante_curadoria_original.jpg" id="1"]
+
+[node name="CurationShelf" type="Node2D"]
+z_as_relative = false
+position = Vector2(945, 262)
+scale = Vector2(0.16666667, 0.16666667)
+
+[node name="OriginalShelfAndTable" type="Polygon2D" parent="."]
+texture_filter = 2
+texture = ExtResource("1")
+polygon = PackedVector2Array(560, 1526, 728, 1520, 728, 678, 810, 640, 1552, 638, 1670, 671, 1670, 1575, 1740, 1585, 1885, 1663, 1885, 1730, 1735, 1750, 1735, 1984, 645, 1984, 645, 1785, 560, 1730)
+uv = PackedVector2Array(560, 1526, 728, 1520, 728, 678, 810, 640, 1552, 638, 1670, 671, 1670, 1575, 1740, 1585, 1885, 1663, 1885, 1730, 1735, 1750, 1735, 1984, 645, 1984, 645, 1785, 560, 1730)

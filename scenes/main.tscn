@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://bxv11porfccx6" path="res://scripts/interactable.gd" id="3_interactable"]
 [ext_resource type="Script" uid="uid://k3xi8s55612f" path="res://scripts/dialogue_panel.gd" id="5_dialogue"]
 [ext_resource type="Texture2D" uid="uid://0fb2emo0vxdv" path="res://IMG/Backgroud.png" id="6_background"]
+[ext_resource type="PackedScene" path="res://scenes/decor/counter_newspaper.tscn" id="7_newspaper"]
 
 [sub_resource type="RectangleShape2D" id="RectShape_door"]
 size = Vector2(115, 223)
@@ -16,6 +17,12 @@ size = Vector2(232.5, 88.625)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_clipboard"]
 size = Vector2(290, 120)
+
+[sub_resource type="RectangleShape2D" id="RectShape_clock"]
+size = Vector2(48, 49)
+
+[sub_resource type="RectangleShape2D" id="RectShape_newspaper"]
+size = Vector2(245, 170)
 
 [node name="Main" type="Node2D" unique_id=1342935080]
 script = ExtResource("1_main")
@@ -116,6 +123,16 @@ shape = SubResource("RectShape_window")
 position = Vector2(-8, -67)
 shape = SubResource("RectShape_window")
 
+[node name="Clock" type="Area2D" parent="."]
+position = Vector2(722, 124)
+script = ExtResource("3_interactable")
+interaction_name = "Relógio antigo"
+description = "Clique para observar o relógio e consultar a hora atual."
+interaction_type = "clock"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Clock"]
+shape = SubResource("RectShape_clock")
+
 [node name="CustomerSpawn" type="Node2D" parent="."]
 position = Vector2(600, 425)
 
@@ -126,6 +143,19 @@ texture = ExtResource("6_background")
 centered = false
 region_enabled = true
 region_rect = Rect2(0, 714, 1672, 227)
+
+[node name="CounterNewspaper" parent="." instance=ExtResource("7_newspaper")]
+
+[node name="NewspaperHotspot" type="Area2D" parent="."]
+position = Vector2(332, 614)
+rotation = 0.12
+script = ExtResource("3_interactable")
+interaction_name = "Curator's Picks"
+description = "As escolhas e notícias do curador."
+interaction_type = "newspaper"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NewspaperHotspot"]
+shape = SubResource("RectShape_newspaper")
 
 [node name="Lamp" type="Area2D" parent="." unique_id=1755761645]
 position = Vector2(157, 431)
@@ -158,6 +188,7 @@ offset_left = -6.0
 offset_top = 3.0
 offset_right = 742.0
 offset_bottom = 179.0
+mouse_filter = 2
 script = ExtResource("5_dialogue")
 metadata/_edit_use_anchors_ = true
 
