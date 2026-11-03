@@ -1,7 +1,14 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/newspaper_screen.gd" id="1"]
 [ext_resource type="Texture2D" path="res://IMG/newspaper_open.png" id="2"]
+
+[sub_resource type="SystemFont" id="PaperFont"]
+font_names = PackedStringArray("Georgia", "Noto Serif", "serif")
+
+[sub_resource type="SystemFont" id="HeadlineFont"]
+font_names = PackedStringArray("Georgia", "Noto Serif", "serif")
+font_weight = 700
 
 [sub_resource type="StyleBoxFlat" id="BackStyle"]
 bg_color = Color(0.075, 0.071, 0.044, 0.86)
@@ -49,6 +56,41 @@ mouse_filter = 2
 texture = ExtResource("2")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="EventContent" type="VBoxContainer" parent="View"]
+layout_mode = 0
+mouse_filter = 2
+theme_override_constants/separation = 24
+
+[node name="Edition" type="Label" parent="View/EventContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.24, 0.13, 0.055, 1)
+theme_override_fonts/font = SubResource("HeadlineFont")
+theme_override_font_sizes/font_size = 20
+
+[node name="Title" type="Label" parent="View/EventContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.08, 0.025, 1)
+theme_override_fonts/font = SubResource("HeadlineFont")
+theme_override_font_sizes/font_size = 42
+autowrap_mode = 3
+
+[node name="Rule" type="ColorRect" parent="View/EventContent"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.24, 0.13, 0.055, 0.65)
+
+[node name="Description" type="Label" parent="View/EventContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.20, 0.10, 0.035, 1)
+theme_override_constants/line_spacing = 8
+theme_override_fonts/font = SubResource("PaperFont")
+theme_override_font_sizes/font_size = 28
+autowrap_mode = 3
 
 [node name="Back" type="Button" parent="View"]
 layout_mode = 0

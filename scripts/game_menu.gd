@@ -1,5 +1,9 @@
 extends CanvasLayer
 
+const HudArt = preload("res://scripts/hud_art.gd")
+const PauseBookUI = preload("res://scripts/pause_book.gd")
+const StartBookUI = preload("res://scripts/start_book.gd")
+
 signal new_game_requested
 signal continue_requested
 signal relaxed_changed(enabled: bool)
@@ -13,14 +17,18 @@ var new_button: Button
 var resume_button: Button
 var relaxed: CheckButton
 var confirmation: ConfirmationDialog
+var pause_button: Button
+var start_menu: Control
+var pause_book: Control
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	layer = 100
-	var pause_button := Button.new()
+	pause_button = Button.new()
 	pause_button.text = "PAUSA · Esc"
-	pause_button.position = Vector2(710, 25)
-	pause_button.custom_minimum_size = Vector2(130, 38)
+	pause_button.position = Vector2(694, 18)
+	pause_button.custom_minimum_size = Vector2(172, 68)
+	HudArt.style_pause(pause_button)
 	pause_button.pressed.connect(toggle_pause)
 	add_child(pause_button)
 	overlay = Control.new()
@@ -30,45 +38,27 @@ func _ready() -> void:
 	shade.color = Color(0.025, 0.018, 0.012, 0.88)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(shade)
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.add_child(center)
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(480, 0)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("201f19")
-	style.border_color = Color("d8b276")
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(10)
-	style.set_content_margin_all(28)
-	panel.add_theme_stylebox_override("panel", style)
-	center.add_child(panel)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 14)
-	panel.add_child(content)
-	title = Label.new()
-	title.text = "BIBLIOTECA"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color("e4c477"))
-	content.add_child(title)
-	var subtitle := Label.new()
-	subtitle.text = "Uma livraria, muitas histórias."
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	content.add_child(subtitle)
-	resume_button = _button(content, "RETOMAR", toggle_pause)
-	continue_button = _button(content, "CONTINUAR", func() -> void: continue_requested.emit())
-	new_button = _button(content, "NOVO JOGO", _request_new_game)
+	start_menu = StartBookUI.new()
+	overlay.add_child(start_menu)
+	title = start_menu.title
+	note = start_menu.note
+	continue_button = start_menu.continue_button
+	new_button = start_menu.new_button
+	start_menu.continue_requested.connect(func() -> void: continue_requested.emit())
+	start_menu.new_game_requested.connect(_request_new_game)
+	# Keep the saved setting shared with the pause menu; the initial book has two actions.
 	relaxed = CheckButton.new()
-	relaxed.text = "Modo tranquilo · sem limite de tempo"
-	relaxed.toggled.connect(func(enabled: bool) -> void: relaxed_changed.emit(enabled))
-	content.add_child(relaxed)
-	note = Label.new()
-	note.custom_minimum_size.x = 420
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.add_theme_font_size_override("font_size", 13)
-	note.add_theme_color_override("font_color", Color("cbbfa7"))
-	content.add_child(note)
+	relaxed.hide()
+	add_child(relaxed)
+	relaxed.toggled.connect(func(enabled: bool) -> void:
+		pause_book.set_relaxed(enabled)
+		relaxed_changed.emit(enabled)
+	)
+	pause_book = PauseBookUI.new()
+	overlay.add_child(pause_book)
+	resume_button = pause_book.resume_button
+	pause_book.resume_requested.connect(toggle_pause)
+	pause_book.relaxed_changed.connect(func(enabled: bool) -> void: relaxed.button_pressed = enabled)
 	confirmation = ConfirmationDialog.new()
 	confirmation.title = "Começar de novo?"
 	confirmation.dialog_text = "O novo jogo substituirá o progresso salvo."
@@ -78,17 +68,12 @@ func _ready() -> void:
 	add_child(confirmation)
 	show_start(false)
 
-func _button(parent: Node, text: String, callback: Callable) -> Button:
-	var button := Button.new()
-	button.text = text
-	button.custom_minimum_size.y = 44
-	button.pressed.connect(callback)
-	parent.add_child(button)
-	return button
-
 func show_start(has_save: bool) -> void:
 	in_game = false
 	overlay.show()
+	start_menu.show()
+	pause_book.hide()
+	title.text = "BIBLIOTECA"
 	resume_button.hide()
 	continue_button.show()
 	continue_button.disabled = not has_save
@@ -112,12 +97,18 @@ func toggle_pause() -> void:
 	overlay.visible = pause
 	get_tree().paused = pause
 	if pause:
-		title.text = "UMA PAUSA PARA LER"
+		start_menu.hide()
+		pause_book.show()
+		pause_book.set_relaxed(relaxed.button_pressed)
 		resume_button.show()
 		continue_button.hide()
 		new_button.hide()
 		note.text = "O atendimento e a chegada de clientes estão pausados. Esc para retomar. O progresso é salvo entre dias."
 		resume_button.grab_focus()
+
+func set_relaxed(enabled: bool) -> void:
+	relaxed.set_pressed_no_signal(enabled)
+	pause_book.set_relaxed(enabled)
 
 func _request_new_game() -> void:
 	if not continue_button.disabled:

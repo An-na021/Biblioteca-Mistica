@@ -13,6 +13,8 @@ const CatalogAPI = preload("res://scripts/catalog_api.gd")
 const ClockScreen = preload("res://scenes/clock_screen.tscn")
 const ClockScreenUI = preload("res://scripts/clock_screen.gd")
 const NewspaperScreenScene = preload("res://scenes/newspaper_screen.tscn")
+const WindowScreenScene = preload("res://scenes/window_screen.tscn")
+const WindowScreenUI = preload("res://scripts/window_screen.gd")
 
 const CUSTOMER_PROFILES: Array[Dictionary] = [
 	{
@@ -180,8 +182,6 @@ var summary_report: Dictionary = {}
 var checkpoint: Dictionary = {}
 var save_path := SaveGame.SAVE_PATH
 var shop_decor: Node2D
-var event_label: Label
-var event_title: Label
 var customer_profiles: Array[Dictionary] = CUSTOMER_PROFILES.duplicate(true)
 var supplier_profiles: Array[Dictionary] = SUPPLIERS.duplicate(true)
 var catalog_snapshot: Dictionary = {}
@@ -193,7 +193,7 @@ func _ready() -> void:
 	notifications = NotificationPanel.new()
 	$UI.add_child(notifications)
 	for interactable in get_tree().get_nodes_in_group("interactables"): _connect_interactable(interactable)
-	for interactable in [$Door, $Window, $Lamp, $Clipboard, $Clock, $NewspaperHotspot]: _connect_interactable(interactable)
+	for interactable in [$Door, $Window, $RightWindow, $Lamp, $Clipboard, $Clock, $NewspaperHotspot]: _connect_interactable(interactable)
 	mood_timer = MoodTimerUI.new() as Control
 	$UI.add_child(mood_timer)
 	mood_timer.hide()
@@ -206,36 +206,7 @@ func _ready() -> void:
 	# Put the original shelf/table before the counter; plants stay above it.
 	shop_decor.shelf.reparent(self)
 	move_child(shop_decor.shelf, $CounterForeground.get_index())
-	var event_panel := PanelContainer.new()
-	event_panel.position = Vector2(16, 138)
-	event_panel.custom_minimum_size.x = 650.0
-	event_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var event_style := StyleBoxFlat.new()
-	event_style.bg_color = Color(0.09, 0.075, 0.055, 0.96)
-	event_style.border_color = Color("8e7543")
-	event_style.set_border_width_all(1)
-	event_style.set_corner_radius_all(6)
-	event_style.set_content_margin(SIDE_LEFT, 14.0)
-	event_style.set_content_margin(SIDE_RIGHT, 14.0)
-	event_style.set_content_margin(SIDE_TOP, 10.0)
-	event_style.set_content_margin(SIDE_BOTTOM, 10.0)
-	event_panel.add_theme_stylebox_override("panel", event_style)
-	$UI.add_child(event_panel)
-	var event_content := VBoxContainer.new()
-	event_content.add_theme_constant_override("separation", 5)
-	event_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	event_panel.add_child(event_content)
-	event_title = Label.new()
-	event_title.add_theme_font_size_override("font_size", 16)
-	event_title.add_theme_color_override("font_color", Color("e4c477"))
-	event_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	event_content.add_child(event_title)
-	event_label = Label.new()
-	event_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	event_label.add_theme_font_size_override("font_size", 16)
-	event_label.add_theme_color_override("font_color", Color("f3ead6"))
-	event_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	event_content.add_child(event_label)
+	_connect_interactable(shop_decor.shelf.get_node("ShelfHotspot"))
 	store_is_open = false
 	game_menu = GameMenuUI.new()
 	add_child(game_menu)
@@ -252,7 +223,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	# Inspection screens suspend service, arrivals and the end-of-day notice.
-	if active_overlay is ClockScreenUI or active_overlay is NewspaperScreen:
+	if active_overlay is ClockScreenUI or active_overlay is NewspaperScreen or active_overlay is WindowScreenUI:
 		return
 	day_manager.tick(delta)
 	var customer_active := store_is_open and customer != null and is_instance_valid(customer) and customer.visible
@@ -307,7 +278,9 @@ func _on_interactable_clicked(interactable: Interactable) -> void:
 		"door": _request_store_closure()
 		"clock": _open_clock()
 		"newspaper": _open_newspaper()
-		"window", "lamp": dialogue_panel.show_message(interactable.interaction_name, interactable.description)
+		"window":
+			_open_window(preload("res://IMG/janela_direita.jpg") if interactable == $RightWindow else null)
+		"lamp": dialogue_panel.show_message(interactable.interaction_name, interactable.description)
 		_: dialogue_panel.show_message(interactable.interaction_name, interactable.description)
 
 
@@ -329,6 +302,23 @@ func _open_newspaper() -> void:
 	if active_overlay != null or not game_menu.in_game or get_tree().paused:
 		return
 	var screen := NewspaperScreenScene.instantiate() as NewspaperScreen
+	screen.configure(day_manager.day, World.event_for_day(day_manager.day))
+	active_overlay = screen
+	$UI.hide()
+	game_menu.hide()
+	add_child(screen)
+	screen.closed.connect(func() -> void:
+		active_overlay = null
+		$UI.show()
+		game_menu.show()
+	)
+
+func _open_window(image: Texture2D = null) -> void:
+	if active_overlay != null or not game_menu.in_game or get_tree().paused:
+		return
+	var screen := WindowScreenScene.instantiate()
+	if image != null:
+		screen.image = image
 	active_overlay = screen
 	$UI.hide()
 	game_menu.hide()
@@ -340,7 +330,7 @@ func _open_newspaper() -> void:
 	)
 
 func _show_customer_profile() -> void:
-	if customer == null or not customer.visible:
+	if active_overlay != null or customer == null or not customer.visible:
 		return
 	customer.set_selected(true)
 	var profile_panel := CustomerProfilePanel.new()
@@ -589,6 +579,12 @@ func _open_inventory() -> void:
 	var preference := str(customer.get_profile().get("preferred_condition", "novo")) if customer_active else ""
 	screen.setup(inventory, request_clue, customer_active, preference, customer if customer_active else null)
 	screen.set_time_left(customer_time_left, relaxed_mode)
+	game_menu.pause_button.hide()
+	screen.pause_requested.connect(game_menu.toggle_pause)
+	screen.tree_exiting.connect(func() -> void:
+		if is_instance_valid(game_menu):
+			game_menu.pause_button.visible = not (is_instance_valid(active_overlay) and active_overlay is InventoryScreen and active_overlay != screen)
+	)
 	screen.deliver_requested.connect(func(book_id: String, condition: String) -> void: _handle_stock_action(book_id, condition, "deliver", screen))
 	screen.negotiate_requested.connect(func(book_id: String, condition: String) -> void: _open_negotiation(book_id, condition, screen))
 	screen.offer_requested.connect(func(book_id: String, condition: String) -> void: _handle_stock_action(book_id, condition, "offer", screen))
@@ -910,6 +906,7 @@ func _reset_day_summary_stats() -> void:
 
 func _update_status() -> void:
 	status_label.text = "Dia %d | Moedas: %d | Reputacao: %d" % [day_manager.day, money, reputation]
+	$UI/StatusPanel.set_values(day_manager.day, money, reputation)
 
 func _start_new_game() -> void:
 	inventory = Inventory.new()
@@ -1011,6 +1008,8 @@ func _write_checkpoint() -> void:
 
 func _set_relaxed_mode(enabled: bool) -> void:
 	relaxed_mode = enabled
+	if game_menu != null:
+		game_menu.set_relaxed(enabled)
 	if not checkpoint.is_empty():
 		# Settings must not replace the opening-day snapshot with mid-service state.
 		checkpoint["relaxed_mode"] = enabled
@@ -1083,9 +1082,6 @@ func _show_livraria(summary: DaySummaryScreen) -> void:
 
 func _update_world_visuals() -> void:
 	shop_decor.update_state(world.upgrades)
-	var event := World.event_for_day(day_manager.day)
-	event_title.text = "HOJE · " + str(event.name).to_upper()
-	event_label.text = str(event.description)
 
 func _create_customer_order(last_book_id: String) -> void:
 	var candidates: Array[Dictionary] = []

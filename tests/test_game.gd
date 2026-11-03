@@ -28,14 +28,31 @@ func screenshot(filename: String) -> void:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.godot/" + filename + ".png")
 
+func click_control(control: Control) -> void:
+	var point := control.get_global_transform_with_canvas() * (control.size * 0.5)
+	var motion := InputEventMouseMotion.new()
+	motion.position = point
+	root.push_input(motion)
+	var click := InputEventMouseButton.new()
+	click.position = point
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	root.push_input(click)
+	click = click.duplicate()
+	click.pressed = false
+	root.push_input(click)
+	await process_frame
+
 func run() -> void:
 	root.size = Vector2i(1280, 720)
 	var game := make_game()
 	await process_frame
 	check(paused and game.customer == null, "Menu inicial impede atendimento antes de iniciar")
 	check(game.game_menu.continue_button.disabled, "Continuar indisponível sem salvamento")
+	check(root.get_visible_rect().encloses(game.game_menu.start_menu.book.get_global_rect()), "Livro do menu inicial cabe na janela")
+	game.game_menu.note.text += "\nUsando o catálogo local."
 	await screenshot("preview_menu")
-	game._start_new_game()
+	await click_control(game.game_menu.new_button)
 	await process_frame
 	check(not paused and game.customer != null, "Novo jogo inicia o primeiro cliente")
 	var opening := SaveGame.read_save(test_path)
@@ -45,7 +62,27 @@ func run() -> void:
 	await create_timer(0.1, true).timeout
 	check(is_equal_approx(remaining, game.customer_time_left), "Pausa congela a paciência")
 	await screenshot("preview_pause")
+	await click_control(game.game_menu.pause_book.active_button)
+	check(paused and game.relaxed_mode and game.game_menu.pause_book.active_button.button_pressed, "Ativado liga o modo tranquilo sem sair da pausa")
+	await screenshot("preview_pause_enabled")
+	await click_control(game.game_menu.pause_book.inactive_button)
+	check(paused and not game.relaxed_mode and game.game_menu.pause_book.inactive_button.button_pressed, "Desativado restaura o limite de tempo sem sair da pausa")
+	root.size = Vector2i(720, 1000)
+	await process_frame
+	await process_frame
+	check(root.get_visible_rect().encloses(game.game_menu.pause_book.book.get_global_rect()), "Livro da pausa cabe em uma janela vertical")
+	await screenshot("preview_pause_portrait")
+	root.size = Vector2i(1280, 720)
+	await process_frame
+	await click_control(game.game_menu.resume_button)
+	check(not paused and not game.game_menu.overlay.visible, "Retomar fecha o livro e continua o atendimento")
 	game.game_menu.toggle_pause()
+	var escape := InputEventKey.new()
+	escape.keycode = KEY_ESCAPE
+	escape.pressed = true
+	root.push_input(escape)
+	await process_frame
+	check(not paused and not game.game_menu.overlay.visible, "Esc retoma o jogo com o novo menu")
 	game._set_relaxed_mode(true)
 	remaining = game.customer_time_left
 	await create_timer(0.1, true).timeout
@@ -54,6 +91,10 @@ func run() -> void:
 	game._open_inventory()
 	var screen: InventoryScreen = game.active_overlay
 	await process_frame
+	check(not game.game_menu.pause_button.visible, "Estoque usa apenas o botão de pausa do livro")
+	screen.pause_requested.emit()
+	check(paused and game.game_menu.overlay.visible, "Botão de pausa do livro abre o menu")
+	game.game_menu.toggle_pause()
 	check(screen.preferred_condition == game.customer.profile_data.preferred_condition, "Estoque mostra a condição preferida")
 	check(screen.time_label.text.begins_with("TEMPO"), "Estoque mantém o tempo restante visível")
 	screen.search_input.text = "JÁRDIM"
@@ -101,7 +142,9 @@ func run() -> void:
 	game.game_menu._request_new_game()
 	check(game.game_menu.confirmation.visible, "Novo jogo pede confirmação ao substituir progresso")
 	game.game_menu.confirmation.hide()
-	game._continue_game()
+	game.game_menu.note.text += "\nUsando o catálogo local."
+	await screenshot("preview_menu_continue")
+	await click_control(game.game_menu.continue_button)
 	await process_frame
 	check(game.money == 0 and game.inventory.get_condition_quantity("jardim_horas", "usado") == 1 and game.relaxed_mode, "Continuar reinicia dia aberto sem duplicar dinheiro ou perder estoque")
 	game.money = 100

@@ -3,221 +3,248 @@ extends Control
 
 signal closed
 
-const PANEL_BG := Color("172019")
-const CARD_BG := Color("252d24")
-const GOLD := Color("e4c477")
-const GOLD_SOFT := Color("9d7e3f")
-const TEXT_PRIMARY := Color("f3ead6")
-const TEXT_MUTED := Color("c2b89f")
-const GREEN := Color("9eb77a")
+const PAPER_TEXTURE: Texture2D = preload("res://IMG/customer_profile_paper.png")
+const SHEET_SIZE := Vector2(400, 600)
+const INK := Color("291e14")
+const MUTED := Color("5e4c34")
+const GREEN := Color("738558")
 
 var customer: Customer
 var profile: Dictionary = {}
-
+var sheet: Control
+var scroll: ScrollContainer
+var details: VBoxContainer
+var more_button: Button
+var _handwriting: SystemFont
+var _closing := false
 
 func setup(value_customer: Customer, value_profile: Dictionary) -> void:
 	customer = value_customer
-	profile = value_profile
+	profile = value_profile.duplicate(true)
 	_build()
-
 
 func _build() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	var paper_theme := Theme.new()
+	var print_font := SystemFont.new()
+	print_font.font_names = PackedStringArray(["Bahnschrift", "Noto Sans", "sans-serif"])
+	paper_theme.default_font = print_font
+	paper_theme.default_font_size = 14
+	theme = paper_theme
+	_handwriting = SystemFont.new()
+	_handwriting.font_names = PackedStringArray(["Georgia", "Noto Serif", "serif"])
+	_handwriting.font_italic = true
 
 	var shade := ColorRect.new()
-	shade.color = Color(0.01, 0.012, 0.009, 0.32)
+	shade.color = Color(0.02, 0.015, 0.008, 0.32)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(shade)
 
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	panel.offset_left = -430.0
-	panel.offset_top = 104.0
-	panel.offset_right = -35.0
-	panel.offset_bottom = 629.0
-	panel.add_theme_stylebox_override("panel", _make_panel_style(PANEL_BG, GOLD, 2, 18, 12))
-	add_child(panel)
+	sheet = Control.new()
+	sheet.name = "ProfileSheet"
+	sheet.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(sheet)
+	var paper := TextureRect.new()
+	paper.texture = PAPER_TEXTURE
+	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	paper.stretch_mode = TextureRect.STRETCH_SCALE
+	paper.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sheet.add_child(paper)
+	resized.connect(_layout_sheet)
+	_layout_sheet()
 
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	panel.add_child(scroll)
 	var layout := VBoxContainer.new()
-	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	layout.add_theme_constant_override("separation", 10)
-	scroll.add_child(layout)
+	layout.position = Vector2(27, 36)
+	layout.size = Vector2(345, 528)
+	layout.add_theme_constant_override("separation", 9)
+	sheet.add_child(layout)
 
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 8)
 	layout.add_child(header)
-	var title_stack := VBoxContainer.new()
-	title_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_stack.add_child(_make_label("FICHA DO CLIENTE", 22, GOLD))
-	title_stack.add_child(_make_label("Informações para um atendimento mais pessoal", 11, TEXT_MUTED))
-	header.add_child(title_stack)
-	var close := Button.new()
-	close.text = "×"
-	close.tooltip_text = "Fechar ficha"
-	close.custom_minimum_size = Vector2(32, 32)
-	_style_button(close, false)
-	close.add_theme_font_size_override("font_size", 20)
-	close.pressed.connect(func() -> void: closed.emit())
-	header.add_child(close)
+	var title := _make_label("FICHA DO CLIENTE", 23)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+	var close_button := Button.new()
+	close_button.text = "×"
+	close_button.tooltip_text = "Fechar ficha · Esc"
+	close_button.custom_minimum_size = Vector2(24, 25)
+	_style_button(close_button)
+	close_button.add_theme_font_size_override("font_size", 21)
+	close_button.pressed.connect(close)
+	header.add_child(close_button)
+	var subtitle := _make_label("Informações para um atendimento mais pessoal", 11, MUTED)
+	layout.add_child(subtitle)
+	layout.add_child(_rule())
 
-	var name_card := PanelContainer.new()
-	name_card.add_theme_stylebox_override("panel", _make_panel_style(Color("3a3021"), GOLD_SOFT, 1, 10, 7))
-	layout.add_child(name_card)
-	var name_layout := VBoxContainer.new()
-	name_layout.add_theme_constant_override("separation", 3)
-	name_card.add_child(name_layout)
-	name_layout.add_child(_make_label(str(profile.get("name", customer.customer_name)), 19, TEXT_PRIMARY))
-	name_layout.add_child(_make_label("CLIENTE ATUAL", 11, GREEN))
-	var behavior := _make_label(str(profile.get("behavior_hint", "")), 12, GOLD)
+	scroll = ScrollContainer.new()
+	scroll.name = "ProfileScroll"
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_style_scrollbar()
+	layout.add_child(scroll)
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 10)
+	scroll.add_child(content)
+
+	var identity := HBoxContainer.new()
+	identity.add_theme_constant_override("separation", 6)
+	content.add_child(identity)
+	var name_label := _make_label(str(profile.get("name", customer.customer_name)), 24)
+	name_label.name = "CustomerName"
+	name_label.add_theme_font_override("font", _handwriting)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	identity.add_child(name_label)
+	var stamp := _make_label("CLIENTE ATUAL", 10, GREEN)
+	stamp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	stamp.add_theme_stylebox_override("normal", _style(Color.TRANSPARENT, Color("879367"), 2, 4))
+	stamp.rotation = -0.035
+	identity.add_child(stamp)
+	var behavior := _make_label(str(profile.get("behavior_hint", customer.behavior_hint())), 14)
+	behavior.name = "Behavior"
 	behavior.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_layout.add_child(behavior)
+	content.add_child(behavior)
 
-	if not customer.get_request_clue().is_empty():
-		layout.add_child(_make_requested_book_card())
-	layout.add_child(_make_condition_preference_card())
+	var clue := customer.get_request_clue()
+	if not clue.is_empty():
+		content.add_child(_rule())
+		content.add_child(_make_label("PISTA DO PEDIDO · " + str(clue.get("type", "titulo")).to_upper(), 11))
+		var request := _make_label(str(clue.get("text", "O cliente ainda não descreveu o livro.")), 16)
+		request.name = "RequestClue"
+		request.add_theme_font_override("font", _handwriting)
+		request.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(request)
+		content.add_child(_rule())
 
-	layout.add_child(_make_label("GOSTA DE", 11, GOLD))
+	var condition_section := VBoxContainer.new()
+	condition_section.add_theme_constant_override("separation", 4)
+	condition_section.add_child(_make_label("CONDIÇÃO PREFERIDA", 11))
+	var condition := str(profile.get("preferred_condition", "novo"))
+	var condition_info := BookCatalog.get_condition(condition)
+	var condition_colors := {"novo": GREEN, "usado": Color("9c794b"), "raro": Color("8b6c83"), "danificado": Color("a26349")}
+	var badge := _make_label(str(condition_info.get("label", condition)).to_upper(), 14, Color("fff6de"))
+	badge.name = "ConditionBadge"
+	badge.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	badge.add_theme_stylebox_override("normal", _style(condition_colors.get(condition, GREEN), Color.TRANSPARENT, 0, 5))
+	condition_section.add_child(badge)
+	content.add_child(condition_section)
+
+	var tastes := VBoxContainer.new()
+	tastes.add_theme_constant_override("separation", 4)
+	tastes.add_child(_make_label("GOSTA DE", 11))
 	var tags := HFlowContainer.new()
-	tags.add_theme_constant_override("h_separation", 6)
+	tags.name = "PreferenceTags"
+	tags.add_theme_constant_override("h_separation", 12)
 	tags.add_theme_constant_override("v_separation", 5)
 	for tag in profile.get("preference_tags", []):
-		tags.add_child(_make_tag_chip(_preference_name(str(tag))))
-	layout.add_child(tags)
+		var tag_box := VBoxContainer.new()
+		tag_box.add_theme_constant_override("separation", 1)
+		var tag_label := _make_label(_preference_name(str(tag)), 16)
+		tag_label.add_theme_font_override("font", _handwriting)
+		tag_box.add_child(tag_label)
+		tag_box.add_child(_rule())
+		tags.add_child(tag_box)
+	tastes.add_child(tags)
+	content.add_child(tastes)
+	content.add_child(_make_section("JEITO DE SER", str(profile.get("personality", "Ainda não conhecemos bem este cliente.")), "Personality"))
 
-	var details := VBoxContainer.new()
-	details.add_theme_constant_override("separation", 8)
+	details = VBoxContainer.new()
+	details.name = "MoreDetails"
+	details.add_theme_constant_override("separation", 12)
 	details.visible = false
-	layout.add_child(details)
-	details.add_child(_make_section("JEITO DE SER", str(profile.get("personality", "Ainda não conhecemos bem este cliente."))))
-	details.add_child(_make_section("SUA HISTÓRIA", str(profile.get("history", "Nenhum registro disponível."))))
-	details.add_child(_make_section("NOSSOS ENCONTROS", str(profile.get("memory_text", "Ainda estamos conhecendo este leitor."))))
-	var more := Button.new()
-	more.text = "VER MAIS SOBRE O CLIENTE  +"
-	more.custom_minimum_size.y = 34
-	_style_button(more, false)
-	more.pressed.connect(func() -> void:
-		details.visible = not details.visible
-		more.text = "VER MENOS  −" if details.visible else "VER MAIS SOBRE O CLIENTE  +"
-	)
-	layout.add_child(more)
+	details.add_child(_make_section("SUA HISTÓRIA", str(profile.get("history", "Nenhum registro disponível.")), "History"))
+	details.add_child(_make_section("NOSSOS ENCONTROS", str(profile.get("memory_text", "Ainda estamos conhecendo este leitor.")), "Memory"))
+	content.add_child(details)
 
-	var hint := _make_label("Escolha uma leitura que combine com o perfil.", 11, TEXT_MUTED)
+	layout.add_child(_rule())
+	more_button = Button.new()
+	more_button.text = "VER MAIS SOBRE O CLIENTE  +"
+	more_button.custom_minimum_size.y = 25
+	_style_button(more_button)
+	more_button.pressed.connect(func() -> void:
+		details.visible = not details.visible
+		more_button.text = "VER MENOS  −" if details.visible else "VER MAIS SOBRE O CLIENTE  +"
+	)
+	layout.add_child(more_button)
+	var hint := _make_label("Escolha uma leitura que combine com o perfil.", 11, MUTED)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(hint)
 
+func _layout_sheet() -> void:
+	var zoom := minf(size.x / 1280.0, size.y / 720.0)
+	var top := 146.0 * zoom
+	zoom = minf(zoom, (size.y - top - 18.0 * zoom) / SHEET_SIZE.y)
+	sheet.size = SHEET_SIZE
+	sheet.scale = Vector2.ONE * zoom
+	sheet.position = Vector2(size.x - (SHEET_SIZE.x + 18.0) * zoom, top)
 
-func _make_requested_book_card() -> Control:
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _make_panel_style(Color("3a3021"), GOLD_SOFT, 1, 8, 7))
-	var info := VBoxContainer.new()
-	info.add_theme_constant_override("separation", 4)
-	card.add_child(info)
-	var clue: Dictionary = customer.get_request_clue()
-	var clue_type := str(clue.get("type", "titulo")).to_upper()
-	info.add_child(_make_label("PISTA DO PEDIDO · %s" % clue_type, 11, GOLD))
-	var clue_text := _make_label(str(clue.get("text", "O cliente ainda não descreveu o livro.")), 14, TEXT_PRIMARY)
-	clue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info.add_child(clue_text)
-	return card
-
-
-func _make_condition_preference_card() -> Control:
-	var condition := str(profile.get("preferred_condition", "novo"))
-	var condition_label := "NOVO"
-	var badge_background := Color("536b42")
-	var badge_border := Color("a5bd79")
-	match condition:
-		"usado":
-			condition_label = "USADO"
-			badge_background = Color("80551f")
-			badge_border = Color("e2b65a")
-		"raro":
-			condition_label = "RARO"
-			badge_background = Color("604477")
-			badge_border = Color("c7a1e2")
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _make_panel_style(Color("30382d"), Color("8e7543"), 1, 8, 7))
-	var info := VBoxContainer.new()
-	info.add_theme_constant_override("separation", 3)
-	card.add_child(info)
-	info.add_child(_make_label("CONDIÇÃO PREFERIDA", 10, GOLD))
-	var detail := HBoxContainer.new()
-	detail.add_theme_constant_override("separation", 8)
-	info.add_child(detail)
-	var badge := PanelContainer.new()
-	badge.add_theme_stylebox_override("panel", _make_panel_style(badge_background, badge_border, 1, 6, 5))
-	badge.add_child(_make_label(condition_label, 12, Color("fff4dc")))
-	detail.add_child(badge)
-	return card
-
-
-func _make_tag_chip(value: String) -> Control:
-	var chip := PanelContainer.new()
-	chip.add_theme_stylebox_override("panel", _make_panel_style(Color("30382d"), Color("666047"), 1, 6, 10))
-	chip.add_child(_make_label(value, 11, GREEN))
-	return chip
-
-
-func _preference_name(tag: String) -> String:
-	var names := {
-		"natureza": "Natureza", "poesia": "Poesia", "mitologia": "Mitologia",
-		"magia": "Magia", "aventura": "Aventura", "diagramas": "Diagramas",
-		"cronicas": "Crônicas", "historia": "História", "mapas": "Mapas",
-		"viagem": "Viagem", "engenharia": "Engenharia", "batalhas": "Batalhas",
-		"alquimia": "Alquimia", "rituais": "Rituais", "criaturas": "Criaturas"
-	}
-	return str(names.get(tag, tag.capitalize()))
-
-
-func _make_section(title: String, body: String) -> Control:
+func _make_section(title: String, body: String, node_name: String) -> Control:
 	var section := VBoxContainer.new()
-	section.add_theme_constant_override("separation", 3)
-	var heading := _make_label(title, 12, GOLD)
-	heading.add_theme_constant_override("outline_size", 2)
-	section.add_child(heading)
-	var text := _make_label(body, 13, TEXT_PRIMARY)
+	section.add_theme_constant_override("separation", 4)
+	section.add_child(_make_label(title, 11))
+	var text := _make_label(body, 15)
+	text.name = node_name
+	text.add_theme_font_override("font", _handwriting)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	section.add_child(text)
 	return section
 
+func _preference_name(tag: String) -> String:
+	var names := {"cronicas": "Crônicas", "historia": "História"}
+	return str(names.get(tag, tag.capitalize()))
 
-func _make_label(value: String, font_size: int, color: Color) -> Label:
+func _make_label(value: String, font_size: int, color := INK) -> Label:
 	var label := Label.new()
 	label.text = value
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	return label
 
+func _rule() -> Control:
+	var rule := ColorRect.new()
+	rule.custom_minimum_size.y = 1
+	rule.color = Color(0.34, 0.26, 0.15, 0.30)
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rule
 
-func _make_panel_style(background: Color, border: Color, border_width: int, padding: float, radius: int) -> StyleBoxFlat:
+func _style(background: Color, border: Color, border_width: int, padding: float) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = background
 	style.border_color = border
 	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(radius)
+	style.set_corner_radius_all(1)
 	style.set_content_margin_all(padding)
 	return style
 
+func _style_button(button: Button) -> void:
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_color_override("font_color", INK)
+	button.add_theme_color_override("font_hover_color", Color("70522d"))
+	button.add_theme_color_override("font_pressed_color", INK)
+	button.add_theme_stylebox_override("normal", _style(Color.TRANSPARENT, Color.TRANSPARENT, 0, 1))
+	button.add_theme_stylebox_override("hover", _style(Color(0.5, 0.37, 0.18, 0.10), Color.TRANSPARENT, 0, 1))
+	button.add_theme_stylebox_override("pressed", _style(Color(0.5, 0.37, 0.18, 0.18), Color.TRANSPARENT, 0, 1))
+	button.add_theme_stylebox_override("focus", _style(Color.TRANSPARENT, MUTED, 1, 1))
 
-func _style_button(button: Button, prominent := false) -> void:
-	button.add_theme_color_override("font_color", TEXT_PRIMARY)
-	button.add_theme_color_override("font_hover_color", Color("fff0c7"))
-	button.add_theme_color_override("font_pressed_color", GOLD)
-	var normal := _make_panel_style(Color("30382d") if not prominent else Color("d5b56d"), Color("666047"), 1, 4, 5)
-	button.add_theme_stylebox_override("normal", normal)
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color("4b543e") if not prominent else Color("efd99e")
-	hover.border_color = Color("fff0c7")
-	button.add_theme_stylebox_override("hover", hover)
+func _style_scrollbar() -> void:
+	var bar := scroll.get_v_scroll_bar()
+	bar.custom_minimum_size.x = 5
+	bar.add_theme_stylebox_override("scroll", _style(Color(0.36, 0.26, 0.13, 0.13), Color.TRANSPARENT, 0, 1))
+	for state in ["grabber", "grabber_highlight", "grabber_pressed"]:
+		bar.add_theme_stylebox_override(state, _style(Color("9e865b"), Color("6d5839"), 1, 2))
 
+func close() -> void:
+	if _closing:
+		return
+	_closing = true
+	closed.emit()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
-		closed.emit()
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and not event.is_echo():
 		get_viewport().set_input_as_handled()
+		close()

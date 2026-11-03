@@ -44,6 +44,21 @@ func screenshot(filename: String) -> void:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.godot/" + filename + ".png")
 
+func click_control(control: Control) -> void:
+	var point := control.get_global_transform_with_canvas() * (control.size * 0.5)
+	var motion := InputEventMouseMotion.new()
+	motion.position = point
+	root.push_input(motion)
+	var click := InputEventMouseButton.new()
+	click.position = point
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	root.push_input(click)
+	click = click.duplicate()
+	click.pressed = false
+	root.push_input(click)
+	await process_frame
+
 func run() -> void:
 	root.size = Vector2i(1280, 720)
 	var hurried := reader("apressado")
@@ -117,16 +132,21 @@ func run() -> void:
 	await process_frame
 	check(negotiation.has_method("show_counter"), "Botão negociar abre tela de proposta")
 	check(negotiation.price_input.size.y < 60 and negotiation.price_input.get_global_rect().end.y < 650, "Campo de preço permanece compacto dentro da janela")
-	negotiation.proposed.emit(16)
+	await screenshot("preview_negotiation_initial")
+	negotiation.price_input.value = 16
+	await click_control(negotiation.propose_button)
 	check(negotiation.counter_price > 0 and game.day_errors == 0 and game.day_sales_count == 0, "Contraproposta na interface mantém estoque e indicadores")
 	await screenshot("preview_negotiation")
-	negotiation.proposed.emit(negotiation.counter_price)
+	await click_control(negotiation.counter_button)
 	check(game.day_sales_count == 1 and game.inventory.get_condition_quantity("jardim_horas", "novo") == 0, "Aceite pela interface vende exatamente um exemplar")
 	await process_frame
 	game._process(7.0)
 	await process_frame
 	game.inventory.add("jardim_horas", 1, "novo")
 	game._open_inventory()
+	game._open_negotiation("jardim_horas", "novo", game.active_overlay)
+	await click_control(game.active_overlay.back_button)
+	check(game.active_overlay is InventoryScreen and game.inventory.get_condition_quantity("jardim_horas", "novo") == 1, "Voltar ao estoque preserva o exemplar sem vender")
 	game._open_negotiation("jardim_horas", "novo", game.active_overlay)
 	game._set_relaxed_mode(false)
 	game.customer_time_left = 0.1

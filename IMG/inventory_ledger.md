@@ -1,0 +1,7 @@
+# Inventory ledger background
+
+`inventory_ledger.png` was prepared with the built-in image generation tool from the user's stock-screen reference (`Gemini_Generated_Image_p3rrlrp3rrlrp3rr.jpg`). All inventory text, filters, entries, and actions are live Godot controls; no interface content is baked into the background.
+
+Final prompt:
+
+> Use case: precise-object-edit. Asset type: background illustration for a functional Godot inventory interface. Edit target: supplied image of an open ledger book on a wooden desk. Preserve the exact 16:9 composition, open-book silhouette, central binding, distressed pale parchment texture, stacked page edges, bookmark, warm wooden desk, partial newspaper at top left and brass lamp at top right, hand-inked fantasy illustration style. Remove ALL interface content from the entire image: every letter, word, number, label, book cover thumbnail, badge, colored highlight, separator line, table ruling, buttons including PAUSA and VOLTAR, search box, dropdowns, pinned note and pins. Reconstruct blank clean parchment where the content was; reconstruct desk wood where the pause button was. Both facing pages should be entirely blank, softly textured light honey parchment with subtle edge aging and a narrow natural center crease. Broad flat readable page area, no dark stains through the center. Keep the book filling the same large frame area from roughly x=10% to 91%, y=8% to 94%, very near top-down. Do not add objects, text, symbols, lines, decorations or UI elements. Output one clean landscape background only.
