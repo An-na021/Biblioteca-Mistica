@@ -2,6 +2,7 @@ extends CanvasLayer
 
 signal closed
 
+const BackButtonStyle = preload("res://scripts/back_button_style.gd")
 @export var image: Texture2D
 
 var _closing := false
@@ -9,6 +10,7 @@ var _closing := false
 func _ready() -> void:
 	$View/WindowImage.texture = image
 	$View.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	BackButtonStyle.apply($View/Back)
 	$View/Back.pressed.connect(close)
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	$View.modulate.a = 0.0

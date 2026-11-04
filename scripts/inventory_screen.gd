@@ -9,6 +9,7 @@ signal reservation_requested
 signal pause_requested
 
 const Paper = preload("res://scripts/inventory_paper.gd")
+const BackButtonStyle = preload("res://scripts/back_button_style.gd")
 const LEDGER_TEXTURE: Texture2D = preload("res://IMG/inventory_ledger.png")
 const DESIGN_SIZE := Vector2(1280, 720)
 
@@ -199,8 +200,8 @@ func build() -> void:
 	layout.add_child(footer)
 	var close := Button.new()
 	close.text = "VOLTAR À LIVRARIA"
-	close.custom_minimum_size = Vector2(248, 34)
-	_style_button(close, true)
+	close.custom_minimum_size = Vector2(300, 42)
+	BackButtonStyle.apply(close)
 	close.pressed.connect(func() -> void: closed.emit())
 	footer.add_child(close)
 

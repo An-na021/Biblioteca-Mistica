@@ -162,6 +162,9 @@ func run() -> void:
 	game._show_livraria(summary)
 	var management: Control = game.active_overlay
 	await process_frame
+	management.refresh(game.world, 17)
+	check(management.upgrade_buttons.lighting.disabled and not management.upgrade_buttons.plants.disabled, "Melhorias refletem o saldo e mantêm a opção acessível")
+	management.refresh(game.world, game.money)
 	management.purchase_requested.emit("lighting")
 	management.purchase_requested.emit("shelves")
 	management.purchase_requested.emit("plants")
@@ -169,8 +172,13 @@ func run() -> void:
 	management.purchase_requested.emit("plants")
 	check(game.money == 42, "Duplo clique não recompra decoração")
 	check(game.shop_decor.upgrades.size() == 3, "Melhorias são aplicadas à cena da livraria")
+	check(management.installed_stamps.lighting.visible and not management.upgrade_buttons.lighting.visible, "Compra substitui botão por carimbo instalado")
 	await screenshot("preview_upgrades")
 	management.tab_container.current_tab = 1
+	await process_frame
+	check(management.tab_buttons[1].button_pressed and management.heading.text == "CADERNO DE LEITORES", "Aba do caderno atualiza a página e a seleção visual")
+	await click_control(management.tab_buttons[1])
+	check(management.tab_buttons[1].button_pressed and management.tab_container.current_tab == 1, "Clicar na aba atual mantém a seleção")
 	await screenshot("preview_journal")
 	var memories: Dictionary = game.world.memories.duplicate(true)
 	game.queue_free()

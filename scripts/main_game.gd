@@ -583,7 +583,7 @@ func _open_inventory() -> void:
 	screen.pause_requested.connect(game_menu.toggle_pause)
 	screen.tree_exiting.connect(func() -> void:
 		if is_instance_valid(game_menu):
-			game_menu.pause_button.visible = not (is_instance_valid(active_overlay) and active_overlay is InventoryScreen and active_overlay != screen)
+			game_menu.pause_button.visible = game_menu.pause_enabled and not (is_instance_valid(active_overlay) and active_overlay is InventoryScreen and active_overlay != screen)
 	)
 	screen.deliver_requested.connect(func(book_id: String, condition: String) -> void: _handle_stock_action(book_id, condition, "deliver", screen))
 	screen.negotiate_requested.connect(func(book_id: String, condition: String) -> void: _open_negotiation(book_id, condition, screen))
@@ -712,6 +712,8 @@ func _combined_merchant_offers() -> Dictionary:
 
 func _show_shop(summary: DaySummaryScreen = null) -> void:
 	if active_overlay != null and active_overlay != summary: return
+	var restore_pause: bool = game_menu.pause_enabled
+	game_menu.set_pause_enabled(false)
 	if supplier_markets.is_empty(): _prepare_supplier_markets()
 	if not store_is_open:
 		_save_checkpoint()
@@ -759,6 +761,7 @@ func _show_shop(summary: DaySummaryScreen = null) -> void:
 	screen.closed.connect(func() -> void:
 		active_overlay = summary
 		if summary != null: summary.visible = true
+		game_menu.set_pause_enabled(restore_pause)
 		screen.queue_free()
 	)
 	screen.next_day_requested.connect(func() -> void:
@@ -876,6 +879,7 @@ func _close_store(customer_inside: bool) -> void:
 func _present_day_summary(restored := false) -> void:
 	if active_overlay != null:
 		return
+	game_menu.set_pause_enabled(false)
 	if not restored:
 		summary_report = progression.finish_day()
 	var progress_report := summary_report
@@ -925,6 +929,7 @@ func _show_districts(summary: DaySummaryScreen) -> void:
 	picker.setup(_district_options(), current_district_id)
 	picker.district_selected.connect(func(district_id: String) -> void:
 		current_district_id = district_id
+		summary.set_district_name(str(_current_district().get("name", "Centro Antigo")))
 		progression.record_district_visit(district_id)
 		_notify_new_achievements()
 		supplier_markets.clear()
@@ -977,6 +982,7 @@ func _start_new_game() -> void:
 	_begin_day()
 
 func _begin_day() -> void:
+	game_menu.set_pause_enabled(true)
 	customer_ids_seen_today.clear()
 	supplier_markets.clear()
 	merchant_offers.clear()

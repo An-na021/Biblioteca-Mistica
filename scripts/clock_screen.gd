@@ -3,6 +3,7 @@ extends CanvasLayer
 
 signal closed
 
+const BackButtonStyle = preload("res://scripts/back_button_style.gd")
 const IMAGE_PIVOT := Vector2(669, 654)
 var _closing := false
 
@@ -12,6 +13,7 @@ var _closing := false
 
 func _ready() -> void:
 	view.resized.connect(_layout_clock)
+	BackButtonStyle.apply($View/Back)
 	$View/Back.pressed.connect(close)
 	_layout_clock()
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)

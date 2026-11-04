@@ -35,14 +35,18 @@ func run() -> void:
 	game._show_shop()
 	var shop: MerchantScreen = game.active_overlay
 	await process_frame
+	check(not game.game_menu.pause_enabled and not game.game_menu.pause_button.visible, "Loja oculta a pausa inclusive durante um dia aberto")
 	var ids: Array[String] = []
 	for row in shop.book_list.get_children():
 		ids.append(str(row.get_meta("book_id")))
 	check(ids.size() == BookCatalog.all_books().size() and ids.count("reino_vidro") == 1 and ids.has("ultimo_dragao"), "Catálogo completo aparece em uma lista, incluindo títulos sem ofertas")
+	shop._show_spread(1)
+	check(shop.current_spread == 1 and shop.previous_page.disabled == false and shop.next_page.disabled, "Catálogo permite consultar a última página")
 	var before: int = game.inventory.get_condition_quantity("reino_vidro", "novo")
 	shop.purchase_requested.emit("reino_vidro", "novo")
 	await process_frame
 	check(game.money == 95 and game.inventory.get_condition_quantity("reino_vidro", "novo") == before + 1, "Compra unificada cobra o preço exibido e entrega um exemplar")
+	check(shop.current_spread == 1, "Compra mantém a página aberta do catálogo")
 	check(int(game.supplier_markets.caravana.reino_vidro.conditions.novo.quantity) == 0 and int(game.supplier_markets.praca.reino_vidro.conditions.novo.quantity) == 2, "Compra reduz apenas o estoque do fornecedor utilizado")
 	check(int(shop.offers.reino_vidro.conditions.novo.price) == 8 and str(shop.offers.reino_vidro.conditions.novo.supplier_id) == "praca", "Oferta esgotada dá lugar ao próximo preço com menor risco no empate")
 	shop.purchase_requested.emit("reino_vidro", "novo")
@@ -53,6 +57,9 @@ func run() -> void:
 	check(game.money == 0 and int(game.supplier_markets.praca.reino_vidro.conditions.novo.quantity) == 1, "Saldo insuficiente preserva dinheiro e estoque de todos os fornecedores")
 	shop.purchase_requested.emit("ultimo_dragao", "raro")
 	check(game.money == 0 and not game.inventory.has("ultimo_dragao"), "Título indisponível não pode ser comprado")
+	shop.closed.emit()
+	await process_frame
+	check(game.game_menu.pause_enabled and game.game_menu.pause_button.visible, "Sair da loja devolve a pausa ao atendimento")
 	game.queue_free()
 	await process_frame
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(test_path))

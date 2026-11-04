@@ -5,6 +5,7 @@ signal closed
 
 const Art = preload("res://scripts/hud_art.gd")
 const Paper = preload("res://scripts/inventory_paper.gd")
+const BackButtonStyle = preload("res://scripts/back_button_style.gd")
 const BOOK: Texture2D = preload("res://IMG/pause_book.png")
 const BUTTON: Texture2D = preload("res://IMG/pause_resume.png")
 const BOOK_SIZE := Vector2(1120, 680)
@@ -103,6 +104,7 @@ func setup(book: Dictionary, customer: Customer, acquisition_cost: int) -> void:
 	counter_button.disabled = true
 	book_view.add_child(counter_button)
 	back_button = _button("VOLTAR AO ESTOQUE", Vector2(418, 64), func() -> void: closed.emit())
+	BackButtonStyle.apply(back_button)
 	back_button.position = Vector2(608, 501)
 	book_view.add_child(back_button)
 

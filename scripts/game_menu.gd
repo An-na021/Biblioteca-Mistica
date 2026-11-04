@@ -3,12 +3,14 @@ extends CanvasLayer
 const HudArt = preload("res://scripts/hud_art.gd")
 const PauseBookUI = preload("res://scripts/pause_book.gd")
 const StartBookUI = preload("res://scripts/start_book.gd")
+const BackButtonStyle = preload("res://scripts/back_button_style.gd")
 
 signal new_game_requested
 signal continue_requested
 signal relaxed_changed(enabled: bool)
 
 var in_game := false
+var pause_enabled := true
 var overlay: Control
 var title: Label
 var note: Label
@@ -64,6 +66,7 @@ func _ready() -> void:
 	confirmation.dialog_text = "O novo jogo substituirá o progresso salvo."
 	confirmation.ok_button_text = "Novo jogo"
 	confirmation.cancel_button_text = "Voltar"
+	BackButtonStyle.apply(confirmation.get_cancel_button())
 	confirmation.confirmed.connect(func() -> void: new_game_requested.emit())
 	add_child(confirmation)
 	show_start(false)
@@ -91,7 +94,7 @@ func enter_game() -> void:
 	get_tree().paused = false
 
 func toggle_pause() -> void:
-	if not in_game or confirmation.visible:
+	if not in_game or not pause_enabled or confirmation.visible:
 		return
 	var pause := not overlay.visible
 	overlay.visible = pause
@@ -106,6 +109,10 @@ func toggle_pause() -> void:
 		note.text = "O atendimento e a chegada de clientes estão pausados. Esc para retomar. O progresso é salvo entre dias."
 		resume_button.grab_focus()
 
+func set_pause_enabled(enabled: bool) -> void:
+	pause_enabled = enabled
+	pause_button.visible = enabled
+
 func set_relaxed(enabled: bool) -> void:
 	relaxed.set_pressed_no_signal(enabled)
 	pause_book.set_relaxed(enabled)
@@ -117,6 +124,6 @@ func _request_new_game() -> void:
 		new_game_requested.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and not event.is_echo() and in_game:
+	if event.is_action_pressed("ui_cancel") and not event.is_echo() and in_game and pause_enabled:
 		toggle_pause()
 		get_viewport().set_input_as_handled()

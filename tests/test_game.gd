@@ -162,6 +162,9 @@ func run() -> void:
 	var closing_money: int = game.money
 	check(closing_money > 100, "Fechamento concede recompensa de meta concluída")
 	var summary: DaySummaryScreen = game.active_overlay
+	check(not game.game_menu.pause_enabled and not game.game_menu.pause_button.visible, "Fechamento remove a pausa do layout")
+	game.game_menu.toggle_pause()
+	check(not paused and not game.game_menu.overlay.visible, "Fechamento ignora a abertura do menu de pausa")
 	game._show_shop(summary)
 	await process_frame
 	var shop: MerchantScreen = game.active_overlay
@@ -185,11 +188,25 @@ func run() -> void:
 	check(game.inventory.condition_quantities == JSON.parse_string(JSON.stringify(stock)) and game.inventory.acquisition_costs == JSON.parse_string(JSON.stringify(costs)), "Estoque e custos de aquisição sobrevivem ao carregamento")
 	check(game.supplier_markets == JSON.parse_string(JSON.stringify(markets)) and game.progression.total_purchases == 2 and game.progression.unlocked_achievements.has("reputation_5"), "Ofertas, progressão e conquistas são preservadas")
 	await screenshot("preview_summary")
+	summary = game.active_overlay
+	game.reputation = 2
+	game._show_districts(summary)
+	await process_frame
+	var picker: DistrictScreen = game.active_overlay
+	check(root.get_visible_rect().encloses(picker.book.get_global_rect()), "Livro dos bairros cabe na janela")
+	var locked_district: Button = picker.book.get_node("District_minas")
+	check(locked_district.disabled, "Bairro bloqueado permanece indisponível no livro")
+	await click_control(locked_district)
+	check(game.active_overlay == picker, "Clicar no bairro bloqueado mantém a seleção aberta")
+	await click_control(picker.book.get_node("District_bosque"))
+	check(game.current_district_id == "bosque" and game.active_overlay == summary and summary.visible, "Selecionar bairro disponível retorna ao fechamento")
+	check(summary.district_badge.text == "BAIRRO DAS FOLHAS", "Fechamento atualiza o bairro selecionado no livro")
 	game.active_overlay.queue_free()
 	game.active_overlay = null
 	game._finish_day()
 	await process_frame
 	check(game.day_manager.day == 2 and game.day_errors == 0 and game.day_sales_count == 0, "Dia seguinte reinicia indicadores antes do atendimento")
+	check(game.game_menu.pause_enabled and game.game_menu.pause_button.visible, "Dia seguinte restaura a pausa durante o atendimento")
 	game.game_menu.toggle_pause()
 	game.day_manager.waiting_for_next = true
 	game.day_manager.waiting_seconds = 4.0

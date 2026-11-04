@@ -3,6 +3,7 @@ extends CanvasLayer
 
 signal closed
 
+const BackButtonStyle = preload("res://scripts/back_button_style.gd")
 var _closing := false
 var _day := 1
 var _daily_event: Dictionary = {}
@@ -17,6 +18,7 @@ func _ready() -> void:
 		_daily_event = preload("res://scripts/shop_world.gd").event_for_day(_day)
 	_update_event()
 	_layout_event()
+	BackButtonStyle.apply($View/Back)
 	$View/Back.pressed.connect(close)
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	view.modulate.a = 0.0
