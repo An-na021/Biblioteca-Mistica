@@ -773,29 +773,84 @@ func _request_store_closure() -> void:
 		dialogue_panel.show_message("Porta", "A loja ja esta fechada. Nenhum cliente novo podera entrar.")
 		return
 	var customer_inside := customer.visible
-	var message := "Ainda ha um cliente dentro da loja. Deseja fechar a loja e pedir para ele se retirar?"
-	if not customer_inside:
-		message = "Nao ha clientes dentro da loja. Deseja fechar a loja?"
-	_show_close_confirmation(message, customer_inside)
+	_show_close_confirmation(customer_inside)
 
-func _show_close_confirmation(message: String, customer_inside: bool) -> void:
-	var confirmation := ConfirmationDialog.new()
-	confirmation.title = "Fechar loja"
-	confirmation.dialog_text = message
-	confirmation.ok_button_text = "Fechar loja"
-	confirmation.cancel_button_text = "Manter aberta"
-	$UI.add_child(confirmation)
-	active_overlay = confirmation
-	confirmation.confirmed.connect(func() -> void:
+func _show_close_confirmation(customer_inside: bool) -> void:
+	var image_path := "res://IMG/close_store_customer.png" if customer_inside else "res://IMG/close_store_empty.png"
+	var image := load(image_path) as Texture2D
+	if image == null:
+		push_error("Nao foi possivel carregar a imagem de fechamento: %s" % image_path)
+		return
+
+	var overlay := Control.new()
+	overlay.name = "CloseStoreConfirmation"
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	$UI.add_child(overlay)
+	active_overlay = overlay
+
+	var viewport_size := get_viewport_rect().size
+	var scale_factor := minf(0.55, minf((viewport_size.x * 0.55) / image.get_width(), (viewport_size.y * 0.55) / image.get_height()))
+	var image_view := TextureRect.new()
+	image_view.texture = image
+	image_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image_view.stretch_mode = TextureRect.STRETCH_SCALE
+	image_view.size = image.get_size() * scale_factor
+	image_view.position = (viewport_size - image_view.size) / 2.0
+	image_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(image_view)
+
+	var close_button_rect: Rect2
+	var keep_open_button_rect: Rect2
+	var close_store_button_rect: Rect2
+	close_button_rect = Rect2(910, 195, 210, 190)
+	close_store_button_rect = Rect2(190, 1045, 440, 310)
+	keep_open_button_rect = Rect2(685, 1045, 440, 310)
+
+	var cancel_button := _add_close_store_hitbox(image_view, close_button_rect, scale_factor)
+	cancel_button.pressed.connect(func() -> void:
 		active_overlay = null
-		confirmation.queue_free()
+		overlay.queue_free()
+	)
+	var close_store_button := _add_close_store_hitbox(image_view, close_store_button_rect, scale_factor)
+	close_store_button.pressed.connect(func() -> void:
+		active_overlay = null
+		overlay.queue_free()
 		_close_store(customer_inside)
 	)
-	confirmation.canceled.connect(func() -> void:
+	var keep_open_button := _add_close_store_hitbox(image_view, keep_open_button_rect, scale_factor)
+	keep_open_button.pressed.connect(func() -> void:
 		active_overlay = null
-		confirmation.queue_free()
+		overlay.queue_free()
 	)
-	confirmation.popup_centered()
+
+
+func _add_close_store_hitbox(parent: Control, hitbox: Rect2, scale_factor: float) -> Button:
+	var button := Button.new()
+	button.position = hitbox.position * scale_factor
+	button.size = hitbox.size * scale_factor
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", _close_store_button_glow(0.22, 0.9))
+	button.add_theme_stylebox_override("pressed", _close_store_button_glow(0.34, 1.0))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	parent.add_child(button)
+	return button
+
+
+func _close_store_button_glow(opacity: float, glow_opacity: float) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1, 1, 1, opacity)
+	style.border_color = Color(1, 1, 1, 0.9)
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(18)
+	style.shadow_color = Color(1, 1, 1, glow_opacity)
+	style.shadow_size = 12
+	style.shadow_offset = Vector2.ZERO
+	return style
+
 
 func _close_store(customer_inside: bool) -> void:
 	store_is_open = false
