@@ -82,6 +82,19 @@ func run() -> void:
 	game.mood_timer.set_time_left(-1.0)
 	check(game.mood_timer.time_label.text == "00:00" and game.mood_timer.time_left == 0.0, "Temporizador termina em zero sem exibir tempo negativo")
 	await screenshot("preview_timer_empty")
+	var plant: Interactable = game.shop_decor.plant_hotspot
+	check(not plant.visible and not plant.input_pickable, "Vaso sem melhoria instalada não recebe cliques")
+	game.shop_decor.update_state({"plants": true})
+	var plant_click := InputEventMouseButton.new()
+	plant_click.button_index = MOUSE_BUTTON_LEFT
+	plant_click.pressed = true
+	plant._input_event(root, plant_click, 0)
+	check(plant.visible and plant.input_pickable and plant._selected and plant._selection_tween != null, "Clique no vaso instalado ativa o retângulo dourado de seleção")
+	check(dialogue.speaker_label.text == "Vaso de flores" and dialogue.text_label.text == plant.description, "Clique no vaso mostra sua descrição e o bônus de recomendações")
+	game._on_interactable_clicked(game.shop_decor.shelf.get_node("ShelfHotspot"))
+	check(not plant._selected, "Inspecionar outro objeto remove a seleção do vaso")
+	game.shop_decor.update_state({})
+	check(not plant.visible and not plant.input_pickable and not plant._selected, "Ocultar o vaso desativa sua interação e seleção")
 	game.queue_free()
 	await process_frame
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(test_path))

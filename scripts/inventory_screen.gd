@@ -26,6 +26,7 @@ var search_input: LineEdit
 var theme_filter: OptionButton
 var condition_filter: OptionButton
 var book_list: VBoxContainer
+var book_scroll: ScrollContainer
 var results_label: Label
 var time_label: Label
 var current_customer: Customer
@@ -178,7 +179,8 @@ func build() -> void:
 	results_label = _make_label("", 11, TEXT_MUTED)
 	layout.add_child(results_label)
 
-	var scroll := ScrollContainer.new()
+	book_scroll = ScrollContainer.new()
+	var scroll := book_scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.custom_minimum_size.y = 170
@@ -283,6 +285,9 @@ func filtered_books() -> Array[Dictionary]:
 	return matches
 
 func _refresh_books() -> void:
+	# A new result set starts at the first title, including when filters clear.
+	# Otherwise a rare edition on the first row can remain above the viewport.
+	book_scroll.scroll_vertical = 0
 	for child in book_list.get_children():
 		book_list.remove_child(child)
 		child.queue_free()
@@ -363,7 +368,7 @@ func _make_book_row(book: Dictionary) -> Control:
 			condition_button.tooltip_text = "%s: %d exemplar(es). Compra %d moedas; venda %d moedas." % [condition_label.capitalize(), int(condition_item.get("quantity", 0)), int(condition_item.get("buy_price", 0)), int(condition_item.get("sale_price", 0))]
 			_style_condition_choice(condition_button, condition_colors.get(condition_id, Color("d8c79d")))
 			condition_selector.add_child(condition_button)
-			if condition_selector.get_child_count() == 1:
+			if condition_id == preferred_condition or condition_selector.get_child_count() == 1:
 				condition_button.button_pressed = true
 		else:
 			metadata.add_child(_make_badge("%s  ×%d" % [condition_label, int(condition_item.get("quantity", 0))], condition_colors.get(condition_id, Color("d8c79d")), TEXT_PRIMARY))

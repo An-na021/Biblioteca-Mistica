@@ -3,7 +3,7 @@ extends CanvasLayer
 const HudArt = preload("res://scripts/hud_art.gd")
 const PauseBookUI = preload("res://scripts/pause_book.gd")
 const StartBookUI = preload("res://scripts/start_book.gd")
-const BackButtonStyle = preload("res://scripts/back_button_style.gd")
+const RestartConfirmationUI = preload("res://scripts/restart_confirmation.gd")
 
 signal new_game_requested
 signal continue_requested
@@ -18,7 +18,7 @@ var continue_button: Button
 var new_button: Button
 var resume_button: Button
 var relaxed: CheckButton
-var confirmation: ConfirmationDialog
+var confirmation: Control
 var pause_button: Button
 var start_menu: Control
 var pause_book: Control
@@ -61,12 +61,7 @@ func _ready() -> void:
 	resume_button = pause_book.resume_button
 	pause_book.resume_requested.connect(toggle_pause)
 	pause_book.relaxed_changed.connect(func(enabled: bool) -> void: relaxed.button_pressed = enabled)
-	confirmation = ConfirmationDialog.new()
-	confirmation.title = "Começar de novo?"
-	confirmation.dialog_text = "O novo jogo substituirá o progresso salvo."
-	confirmation.ok_button_text = "Novo jogo"
-	confirmation.cancel_button_text = "Voltar"
-	BackButtonStyle.apply(confirmation.get_cancel_button())
+	confirmation = RestartConfirmationUI.new()
 	confirmation.confirmed.connect(func() -> void: new_game_requested.emit())
 	add_child(confirmation)
 	show_start(false)
@@ -89,6 +84,7 @@ func show_start(has_save: bool) -> void:
 		new_button.grab_focus()
 
 func enter_game() -> void:
+	confirmation.hide()
 	in_game = true
 	overlay.hide()
 	get_tree().paused = false

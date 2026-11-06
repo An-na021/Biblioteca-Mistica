@@ -9,6 +9,9 @@ const World = preload("res://scripts/shop_world.gd")
 const NegotiationUI = preload("res://scripts/negotiation_screen.gd")
 const LivrariaUI = preload("res://scripts/livraria_screen.gd")
 const ShopDecorUI = preload("res://scripts/shop_decor.gd")
+const AtmosphereUI = preload("res://scripts/shop_atmosphere.gd")
+const CustomerTransitions = preload("res://scripts/customer_transitions.gd")
+const SaleFeedbackUI = preload("res://scripts/sale_feedback.gd")
 const CatalogAPI = preload("res://scripts/catalog_api.gd")
 const ClockScreen = preload("res://scenes/clock_screen.tscn")
 const ClockScreenUI = preload("res://scripts/clock_screen.gd")
@@ -182,6 +185,10 @@ var summary_report: Dictionary = {}
 var checkpoint: Dictionary = {}
 var save_path := SaveGame.SAVE_PATH
 var shop_decor: Node2D
+var atmosphere: Node2D
+var ambient_service_seconds := 0.0
+var customer_transitions: Node2D
+var sale_feedback: Control
 var customer_profiles: Array[Dictionary] = CUSTOMER_PROFILES.duplicate(true)
 var supplier_profiles: Array[Dictionary] = SUPPLIERS.duplicate(true)
 var catalog_snapshot: Dictionary = {}
@@ -207,6 +214,17 @@ func _ready() -> void:
 	shop_decor.shelf.reparent(self)
 	move_child(shop_decor.shelf, $CounterForeground.get_index())
 	_connect_interactable(shop_decor.shelf.get_node("ShelfHotspot"))
+	_connect_interactable(shop_decor.plant_hotspot)
+	atmosphere = AtmosphereUI.new()
+	atmosphere.name = "ShopAtmosphere"
+	add_child(atmosphere)
+	customer_transitions = CustomerTransitions.new()
+	customer_transitions.name = "CustomerTransitions"
+	add_child(customer_transitions)
+	move_child(customer_transitions, customer_spawn.get_index() + 1)
+	sale_feedback = SaleFeedbackUI.new()
+	$UI.add_child(sale_feedback)
+	sale_feedback.setup(self, $UI/StatusPanel.money_value)
 	store_is_open = false
 	game_menu = GameMenuUI.new()
 	add_child(game_menu)
@@ -224,7 +242,9 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	# Inspection screens suspend service, arrivals and the end-of-day notice.
 	if active_overlay is ClockScreenUI or active_overlay is NewspaperScreen or active_overlay is WindowScreenUI:
+		atmosphere.animations_active = false
 		return
+	_update_atmosphere(delta)
 	day_manager.tick(delta)
 	var customer_active := store_is_open and customer != null and is_instance_valid(customer) and customer.visible
 	if mood_timer != null:
@@ -239,11 +259,26 @@ func _process(delta: float) -> void:
 		_customer_service_timed_out()
 
 
+func _update_atmosphere(delta: float) -> void:
+	atmosphere.animations_active = game_menu.in_game and active_overlay == null
+	atmosphere.lighting_installed = world.upgrades.has("lighting")
+	if not game_menu.in_game:
+		return
+	if not store_is_open:
+		atmosphere.set_day_progress(1.0)
+		return
+	if active_overlay == null and customer != null and customer.visible:
+		ambient_service_seconds += delta
+	var within_service := minf(0.80, ambient_service_seconds / maxf(45.0, customer_time_limit))
+	if customer == null or not customer.visible:
+		within_service = 0.0
+	var progress := (float(day_manager.served_today) + within_service) / maxf(1.0, day_manager.customers_today)
+	atmosphere.set_day_progress(progress)
+
 func _customer_service_timed_out() -> void:
 	if customer == null or not customer.visible or not store_is_open:
 		return
-	customer.set_selected(false)
-	customer.visible = false
+	_depart_customer()
 	day_errors += 1
 	day_failed_customers += 1
 	reputation -= 1
@@ -269,6 +304,7 @@ func _connect_interactable(interactable: Interactable) -> void:
 
 func _on_interactable_clicked(interactable: Interactable) -> void:
 	if active_overlay != null: return
+	shop_decor.plant_hotspot.set_selected(interactable == shop_decor.plant_hotspot)
 	match interactable.interaction_type:
 		"customer":
 			if not store_is_open or not customer.visible: return
@@ -332,6 +368,7 @@ func _open_window(image: Texture2D = null) -> void:
 func _show_customer_profile() -> void:
 	if active_overlay != null or customer == null or not customer.visible:
 		return
+	customer_transitions.finish_arrival()
 	customer.set_selected(true)
 	var profile_panel := CustomerProfilePanel.new()
 	$UI.add_child(profile_panel)
@@ -345,6 +382,7 @@ func _show_customer_profile() -> void:
 	)
 
 func _on_customer_ready(index: int, total: int) -> void:
+	ambient_service_seconds = 0.0
 	if index == 1:
 		progression.begin_day(day_manager.day, total)
 	var available_profiles: Array[Dictionary] = []
@@ -363,6 +401,7 @@ func _on_customer_ready(index: int, total: int) -> void:
 		push_error("Nao foi possivel carregar a cena do cliente: %s" % profile.scene_path)
 		return
 	if customer != null:
+		customer_transitions.finish_arrival()
 		customer.set_selected(false)
 		customer.queue_free()
 	customer = customer_scene.instantiate() as Customer
@@ -402,6 +441,7 @@ func _on_customer_ready(index: int, total: int) -> void:
 	mood_timer.call("setup", mood_type, customer_time_limit)
 	_connect_interactable(customer)
 	customer.visible = true
+	customer_transitions.arrive(customer)
 	dialogue_panel.show_message("Porta", "%s entra na loja." % customer.customer_name)
 	_update_status()
 
@@ -462,8 +502,7 @@ func _validate_customer_data() -> void:
 func _on_store_closed() -> void:
 	store_is_open = false
 	if customer != null:
-		customer.set_selected(false)
-	customer.visible = false
+		_depart_customer()
 	dialogue_panel.show_message("Livraria", "Esta ficando tarde acho que nenhum cliente mais ira vir.")
 	if active_overlay != null:
 		active_overlay.queue_free()
@@ -571,6 +610,7 @@ func _shop_reservations() -> Array[Dictionary]:
 	return reservations
 
 func _open_inventory() -> void:
+	customer_transitions.finish_arrival()
 	var screen := InventoryScreen.new()
 	$UI.add_child(screen)
 	active_overlay = screen
@@ -602,8 +642,7 @@ func _reserve_customer_book(screen: InventoryScreen) -> void:
 	_notify("RESERVA REGISTRADA", "%s · %s (%s). O livro está marcado na loja para comprar no fechamento." % [customer.customer_name, title, str(BookCatalog.get_condition(condition).label)], "success")
 	dialogue_panel.show_message(customer.customer_name, "Pode reservar %s para mim? Volto em outra visita para buscar. Obrigado!" % title)
 	customer.served = true
-	customer.set_selected(false)
-	customer.visible = false
+	_depart_customer()
 	day_customers_served += 1
 	active_overlay = null
 	screen.queue_free()
@@ -663,15 +702,14 @@ func _complete_stock_action(book: Dictionary, result: Dictionary, screen: Contro
 		_notify("VENDA CONCLUIDA", "%s por %d moedas." % [str(book.get("title", "Livro")), sale_amount], "success")
 		if inventory.get_quantity(book_id) == 0:
 			_notify("ESTOQUE ESGOTADO", "%s acabou do estoque." % str(book.get("title", "Livro")), "warning")
-		customer.set_selected(false)
-		customer.visible = false
+		sale_feedback.play_sale(book, sale_amount + int(chapter.reward), customer.global_position + Vector2(60, 64))
+		_depart_customer(0.72)
 		day_manager.customer_completed()
 	elif bool(result.get("completed", false)):
 		world.record_departure(str(customer.profile_data.id))
 		day_failed_customers += 1
 		_notify("CLIENTE FOI EMBORA", "O cliente encerrou o atendimento sem comprar.", "warning")
-		customer.set_selected(false)
-		customer.visible = false
+		_depart_customer()
 		day_manager.customer_completed()
 	else:
 		_notify("SUGESTAO RECUSADA", "O cliente ainda esta disposto a ouvir outra oferta.", "info")
@@ -684,6 +722,13 @@ func _complete_stock_action(book: Dictionary, result: Dictionary, screen: Contro
 	screen.queue_free()
 	_update_status()
 
+
+func _depart_customer(hold_seconds := 0.0) -> void:
+	if customer == null or not is_instance_valid(customer):
+		return
+	customer.set_selected(false)
+	customer_transitions.depart(customer, hold_seconds)
+	customer.hide()
 
 func _combined_merchant_offers() -> Dictionary:
 	var combined: Dictionary = {}
@@ -868,8 +913,7 @@ func _close_store(customer_inside: bool) -> void:
 		_notify_new_achievements()
 		_notify("CLIENTE INSATISFEITO", "O cliente saiu antes de ser atendido.", "danger")
 		_notify("REPUTACAO ALTERADA", "-1 (total: %d)." % reputation, "reputation")
-		customer.set_selected(false)
-		customer.visible = false
+		_depart_customer()
 		dialogue_panel.show_message("Livraria", "A loja foi fechada e o cliente foi convidado a se retirar. Reputacao -1.")
 	else:
 		dialogue_panel.show_message("Livraria", "A loja foi fechada. Nenhum cliente estava dentro.")
@@ -877,6 +921,7 @@ func _close_store(customer_inside: bool) -> void:
 	_present_day_summary()
 
 func _present_day_summary(restored := false) -> void:
+	atmosphere.set_day_progress(1.0, true)
 	if active_overlay != null:
 		return
 	game_menu.set_pause_enabled(false)
@@ -982,6 +1027,10 @@ func _start_new_game() -> void:
 	_begin_day()
 
 func _begin_day() -> void:
+	customer_transitions.reset()
+	sale_feedback.reset_day()
+	ambient_service_seconds = 0.0
+	atmosphere.reset_day()
 	game_menu.set_pause_enabled(true)
 	customer_ids_seen_today.clear()
 	supplier_markets.clear()
@@ -1143,6 +1192,7 @@ func _show_livraria(summary: DaySummaryScreen) -> void:
 
 func _update_world_visuals() -> void:
 	shop_decor.update_state(world.upgrades)
+	atmosphere.lighting_installed = world.upgrades.has("lighting")
 
 func _create_customer_order(last_book_id: String) -> void:
 	var candidates: Array[Dictionary] = []

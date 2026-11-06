@@ -4,14 +4,15 @@
 [ext_resource type="Script" path="res://scripts/interactable.gd" id="2_interactable"]
 
 [sub_resource type="RectangleShape2D" id="RectShape_shelf"]
-size = Vector2(157, 156)
+size = Vector2(141, 140)
 
 [node name="CurationShelf" type="Node2D"]
 z_as_relative = false
-position = Vector2(945, 262)
-scale = Vector2(0.16666667, 0.16666667)
+position = Vector2(960, 280)
+scale = Vector2(0.15, 0.15)
 
 [node name="OriginalShelfAndTable" type="Polygon2D" parent="."]
+modulate = Color(0.76, 0.66, 0.49, 1)
 texture_filter = 2
 texture = ExtResource("1")
 polygon = PackedVector2Array(560, 1526, 728, 1520, 728, 678, 810, 640, 1552, 638, 1670, 671, 1670, 1575, 1740, 1585, 1885, 1663, 1885, 1730, 1735, 1750, 1735, 1984, 645, 1984, 645, 1785, 560, 1730)
@@ -19,7 +20,7 @@ uv = PackedVector2Array(560, 1526, 728, 1520, 728, 678, 810, 640, 1552, 638, 167
 
 [node name="ShelfHotspot" type="Area2D" parent="."]
 position = Vector2(1199, 1107)
-scale = Vector2(6, 6)
+scale = Vector2(6.6666665, 6.6666665)
 script = ExtResource("2_interactable")
 interaction_name = "Estante de curadoria"
 description = "Uma estante dedicada às descobertas da casa. Permite negociar até 5% extras do preço de balcão."

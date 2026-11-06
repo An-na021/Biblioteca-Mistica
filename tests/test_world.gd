@@ -172,6 +172,7 @@ func run() -> void:
 	management.purchase_requested.emit("plants")
 	check(game.money == 42, "Duplo clique não recompra decoração")
 	check(game.shop_decor.upgrades.size() == 3, "Melhorias são aplicadas à cena da livraria")
+	check(game.get_node("Lamp").visible and game.get_node("Lamp").input_pickable and game.atmosphere.desk_lamp_emission.visible, "Compra real de Luz de leitura instala a luminária no cenário")
 	check(management.installed_stamps.lighting.visible and not management.upgrade_buttons.lighting.visible, "Compra substitui botão por carimbo instalado")
 	await screenshot("preview_upgrades")
 	management.tab_container.current_tab = 1
@@ -187,6 +188,7 @@ func run() -> void:
 	game._continue_game()
 	await process_frame
 	check(game.world.upgrades.size() == 3 and game.world.memories == JSON.parse_string(JSON.stringify(memories)) and game.money == 42, "Salvamento preserva melhorias, encomendas e memória dos leitores")
+	check(game.get_node("Lamp").visible and game.atmosphere.desk_lamp_emission.visible, "Continuar a partida mantém a luminária comprada instalada")
 	var pending: Array[Dictionary] = game.world.pending_orders()
 	check(not pending.is_empty(), "Venda criou encomenda para uma visita futura")
 	game._prepare_supplier_markets()

@@ -1,8 +1,43 @@
+# Cache, importações processadas e estado local do editor Godot
 .godot/
+
+# Ambientes e caches Python
 .venv/
 __pycache__/
+*.py[cod]
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Banco local da API (o schema e o seed continuam versionados)
 api/data/
 *.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
+*.sqlite3-journal
+
+# Configurações de ambiente locais
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Saídas de build/exportação
+/build/
+/dist/
+/exports/
+
+# Logs e temporários
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+
+# Metadados do sistema operacional
+.DS_Store
+Thumbs.db
+Desktop.ini

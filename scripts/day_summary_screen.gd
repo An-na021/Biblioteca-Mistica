@@ -117,7 +117,7 @@ func build(day: int, customers_served: int, sales_count: int, sales_revenue: int
 	var sales := _metric_card("VENDAS", "%d moedas" % sales_revenue, "%d transações concluídas." % sales_count, INK, false)
 	sales.custom_minimum_size.y = 88
 	content.add_child(sales)
-	var no_sale := _metric_card("CLIENTES SEM VENDA", str(errors), "Clientes que encerraram o atendimento sem comprar.", RED if errors > 0 else INK, false)
+	var no_sale := _metric_card("CLIENTES SEM ATENDIMENTO", str(errors), "Clientes que ficaram sem atendimento.", RED if errors > 0 else INK, false)
 	no_sale.custom_minimum_size.y = 98
 	content.add_child(no_sale)
 	content.add_child(_goal_group("OBJETIVOS DE HOJE", progress_report.get("daily_goals", []), "Recompensa diária: %d moedas" % int(progress_report.get("daily_reward", 0))))
