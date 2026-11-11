@@ -206,7 +206,10 @@ func _book_row(book_id: String, offer: Dictionary) -> CatalogueEntry:
 					readers.append(str(order.get("customer_name", "Leitor")))
 			var missing := maxi(0, int(demand[condition]) - inventory.get_condition_quantity(book_id, str(condition)))
 			var status := "comprar %d" % missing if missing > 0 else "pronto para entregar"
+			if missing > 0 and int(demand[condition]) > 1:
+				status += " (%d/%d no estoque)" % [int(demand[condition]) - missing, int(demand[condition])]
 			var reserved := _make_label("Reserva: %s · %s · %s" % [", ".join(readers), str(BookCatalog.get_condition(str(condition)).label), status], 14, MUTED if missing > 0 else GREEN, false, true)
+			reserved.name = "Reservation_" + str(condition)
 			reserved.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			notes.add_child(reserved)
 
@@ -225,13 +228,14 @@ func _book_row(book_id: String, offer: Dictionary) -> CatalogueEntry:
 		picker.set_item_metadata(index, condition)
 		if str(_selected_conditions.get(book_id, "")) == str(condition):
 			saved_index = index
-		if preferred_index < 0 and int(demand.get(condition, 0)) > inventory.get_condition_quantity(book_id, condition):
-			preferred_index = index
+		if int(demand.get(condition, 0)) > inventory.get_condition_quantity(book_id, condition):
+			if preferred_index < 0 or saved_index == index:
+				preferred_index = index
 	if picker.item_count == 0:
 		_place(_unavailable_stamp(), Rect2(333, 8, 130, 32), row)
 		picker.free()
 		return row
-	picker.select(saved_index if saved_index >= 0 else (preferred_index if preferred_index >= 0 else 0))
+	picker.select(preferred_index if preferred_index >= 0 else (saved_index if saved_index >= 0 else 0))
 	_place(picker, Rect2(343, 4, 120, 31), row)
 	var buy := _paper_button("", 15)
 	buy.name = "Buy"
@@ -243,7 +247,13 @@ func _book_row(book_id: String, offer: Dictionary) -> CatalogueEntry:
 		var price := int(selected_offer.price)
 		buy.text = "Comprar · %d moedas" % price
 		buy.disabled = money < price
-		buy.tooltip_text = "Moedas insuficientes." if buy.disabled else "Comprar um exemplar. Risco de avaria: %d%%." % roundi(float(selected_offer.get("risk", 0.0)) * 100.0)
+		var reserved_copy := int(demand.get(selected, 0)) > inventory.get_condition_quantity(book_id, selected)
+		if buy.disabled:
+			buy.tooltip_text = "Moedas insuficientes."
+		elif reserved_copy:
+			buy.tooltip_text = "Comprar um exemplar para a reserva. Condição garantida, sem risco de avaria."
+		else:
+			buy.tooltip_text = "Comprar um exemplar. Risco de avaria: %d%%." % roundi(float(selected_offer.get("risk", 0.0)) * 100.0)
 	update_purchase.call()
 	picker.item_selected.connect(func(_index: int) -> void: update_purchase.call())
 	buy.pressed.connect(func() -> void: purchase_requested.emit(book_id, str(picker.get_item_metadata(picker.selected))))

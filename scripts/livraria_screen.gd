@@ -107,7 +107,7 @@ func _upgrade_card(upgrade_id: String, icon_index: int, rect: Rect2, parent: Con
 	card.name = "Upgrade_" + upgrade_id
 	card.framed = upgrade_id == "lighting"
 	_place(card, rect, parent)
-	_place(_label(str(info.name), 31), Rect2(12, 9, 424, 48), card)
+	_place(_label(str(info.name), 31), Rect2(12, 9, 424 if upgrade_id == "lighting" else 358, 48), card)
 	var icon := TextureRect.new()
 	icon.name = "Illustration"
 	var atlas: Texture2D = load("res://IMG/livraria_illustrations.png")
@@ -116,14 +116,15 @@ func _upgrade_card(upgrade_id: String, icon_index: int, rect: Rect2, parent: Con
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_place(icon, Rect2(8, 63, 97, 116), card)
-	var detail := _label(str(info.description), 22 if upgrade_id == "lighting" else 21)
+	_place(icon, Rect2(8, 63, 97, 116) if upgrade_id == "lighting" else Rect2(378, 6, 62, 51), card)
+	var detail := _label(World.upgrade_description(upgrade_id), 18)
+	detail.name = "Description"
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_place(detail, Rect2(109, 65, 328, 126 if upgrade_id == "lighting" else 103), card)
+	_place(detail, Rect2(109, 64, 328, 126) if upgrade_id == "lighting" else Rect2(12, 64, 426, 110), card)
 	var buy := _paper_button("", 21)
 	buy.name = "Buy_" + upgrade_id
 	buy.pressed.connect(func() -> void: purchase_requested.emit(upgrade_id))
-	var action_rect := Rect2(90, 211 if upgrade_id == "lighting" else 171, 300, 46)
+	var action_rect := Rect2(90, 211 if upgrade_id == "lighting" else 177, 300, 46 if upgrade_id == "lighting" else 40)
 	_place(buy, action_rect, card)
 	upgrade_buttons[upgrade_id] = buy
 	var stamp := _installed_stamp()

@@ -85,16 +85,29 @@ func run() -> void:
 	var plant: Interactable = game.shop_decor.plant_hotspot
 	check(not plant.visible and not plant.input_pickable, "Vaso sem melhoria instalada não recebe cliques")
 	game.shop_decor.update_state({"plants": true})
+	# Isolate the simulated pointer from the real cursor in rendered test runs.
+	var picking_enabled := root.physics_object_picking
+	root.physics_object_picking = false
+	await physics_frame
+	await process_frame
+	plant.mouse_entered.emit()
+	plant._glow_tween.custom_step(0.25)
+	check(plant._hovered and plant._glow_strength > 0.0, "Passar o mouse sobre a planta acende o retângulo dourado")
 	var plant_click := InputEventMouseButton.new()
 	plant_click.button_index = MOUSE_BUTTON_LEFT
 	plant_click.pressed = true
 	plant._input_event(root, plant_click, 0)
-	check(plant.visible and plant.input_pickable and plant._selected and plant._selection_tween != null, "Clique no vaso instalado ativa o retângulo dourado de seleção")
+	check(plant.visible and plant.input_pickable and not plant._selected and plant._selection_tween == null, "Clicar na planta não mantém o retângulo selecionado")
 	check(dialogue.speaker_label.text == "Vaso de flores" and dialogue.text_label.text == plant.description, "Clique no vaso mostra sua descrição e o bônus de recomendações")
+	await screenshot("preview_plant_hover")
+	plant.mouse_exited.emit()
+	check(not plant._hovered and not plant._selected and plant._glow_strength == 0.0 and plant._glow_tween == null, "Retirar o mouse apaga o retângulo, mesmo depois de clicar")
+	await screenshot("preview_plant_after_exit")
 	game._on_interactable_clicked(game.shop_decor.shelf.get_node("ShelfHotspot"))
 	check(not plant._selected, "Inspecionar outro objeto remove a seleção do vaso")
 	game.shop_decor.update_state({})
 	check(not plant.visible and not plant.input_pickable and not plant._selected, "Ocultar o vaso desativa sua interação e seleção")
+	root.physics_object_picking = picking_enabled
 	game.queue_free()
 	await process_frame
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(test_path))

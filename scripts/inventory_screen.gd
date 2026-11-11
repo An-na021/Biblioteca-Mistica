@@ -34,13 +34,16 @@ var reserve_button: Button
 var ledger: Control
 var paper_font: SystemFont
 var heading_font: SystemFont
+var shop_world: RefCounted
+var _results_revision := 0
 
-func setup(value: Inventory, value_request_clue: Dictionary = {}, value_has_active_customer := false, value_preferred_condition := "", value_customer: Customer = null) -> void:
+func setup(value: Inventory, value_request_clue: Dictionary = {}, value_has_active_customer := false, value_preferred_condition := "", value_customer: Customer = null, value_world: RefCounted = null) -> void:
 	inventory = value
 	request_clue = value_request_clue.duplicate(true)
 	has_active_customer = value_has_active_customer
 	preferred_condition = value_preferred_condition
 	current_customer = value_customer
+	shop_world = value_world
 	build()
 
 func build() -> void:
@@ -285,8 +288,7 @@ func filtered_books() -> Array[Dictionary]:
 	return matches
 
 func _refresh_books() -> void:
-	# A new result set starts at the first title, including when filters clear.
-	# Otherwise a rare edition on the first row can remain above the viewport.
+	_results_revision += 1
 	book_scroll.scroll_vertical = 0
 	for child in book_list.get_children():
 		book_list.remove_child(child)
@@ -302,6 +304,17 @@ func _refresh_books() -> void:
 		var empty := _make_label(message, 16, TEXT_MUTED)
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		book_list.add_child(empty)
+	# Containers finish sorting after input and popup dismissal. Reset again
+	# against the final layout, so an old scroll offset cannot hide row one.
+	_reset_results_scroll.call_deferred(_results_revision)
+
+func _reset_results_scroll(revision: int) -> void:
+	await get_tree().process_frame
+	if revision != _results_revision or not is_instance_valid(book_scroll):
+		return
+	book_scroll.scroll_vertical = 0
+	if book_list.get_child_count() > 0:
+		book_scroll.ensure_control_visible(book_list.get_child(0) as Control)
 
 func set_time_left(seconds: float, relaxed: bool) -> void:
 	if time_label == null:
@@ -434,6 +447,22 @@ func _make_book_row(book: Dictionary) -> Control:
 		_style_button(offer, false)
 		offer.pressed.connect(func() -> void: offer_requested.emit(book_id, _selected_condition(condition_group)))
 		actions.add_child(offer)
+		var action_buttons: Array[Button] = [deliver, negotiate, offer]
+		for button in action_buttons:
+			button.set_meta("normal_tooltip", button.tooltip_text)
+		var update_availability := func() -> void:
+			var selected := "novo"
+			for choice in condition_selector.get_children():
+				if choice.button_pressed:
+					selected = str(choice.get_meta("condition"))
+			var reader_id := str(current_customer.profile_data.get("id", "")) if current_customer != null else ""
+			var locked: bool = shop_world != null and shop_world.available_for_customer(inventory, book_id, selected, reader_id) <= 0
+			for button in action_buttons:
+				button.disabled = locked
+				button.tooltip_text = "Guardado no armário para a encomenda de outro leitor." if locked else str(button.get_meta("normal_tooltip"))
+		if condition_group != null:
+			condition_group.pressed.connect(func(_button: BaseButton) -> void: update_availability.call())
+		update_availability.call()
 
 	return row
 

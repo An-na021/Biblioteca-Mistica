@@ -1,5 +1,6 @@
 extends Node2D
 
+const World = preload("res://scripts/shop_world.gd")
 const PLANT_TEXTURE: Texture2D = preload("res://IMG/planta_balcao.png")
 const SHELF_SCENE: PackedScene = preload("res://scenes/decor/curation_shelf.tscn")
 const PLANT_SIZE := Vector2(108, 108)
@@ -23,6 +24,7 @@ func _ready() -> void:
 	_add_lamp_cleanup()
 	shelf = SHELF_SCENE.instantiate()
 	add_child(shelf)
+	shelf.get_node("ShelfHotspot").description = World.upgrade_description("shelves")
 	shelf.visible = upgrades.has("shelves")
 	_add_counter_occlusion()
 	_add_plant_visual()
@@ -35,6 +37,7 @@ func _add_lamp_cleanup() -> void:
 	if background == null:
 		return
 	lamp_hotspot = room.get_node("Lamp") as Interactable
+	lamp_hotspot.description = World.upgrade_description("lighting")
 	# The lamp is painted into both the room and the foreground counter.
 	# Keep each cleanup plate in the same depth layer as its original pixels.
 	var regions := [Rect2(40, 440, 375, 274), Rect2(40, 714, 375, 171)]
@@ -94,7 +97,7 @@ func _add_plant_hotspot() -> void:
 	plant_hotspot.name = "PlantHotspot"
 	plant_hotspot.position = PLANT_BASE - Vector2(0, PLANT_SIZE.y * 0.5)
 	plant_hotspot.interaction_name = "Vaso de flores"
-	plant_hotspot.description = "Folhagens e flores para acolher os leitores. +6 pontos percentuais nas recomendações compatíveis."
+	plant_hotspot.description = World.upgrade_description("plants")
 	plant_hotspot.interaction_type = "counter_plant"
 	var collision := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()

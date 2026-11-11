@@ -168,7 +168,7 @@ shape = SubResource("RectShape_newspaper")
 position = Vector2(157, 431)
 script = ExtResource("3_interactable")
 interaction_name = "Luminaria antiga"
-description = "A cupula quente deixa tudo com cara de segredo."
+description = "Instala a luminária e dá +10 segundos de paciência a cada cliente. Automático nos próximos atendimentos. No modo sem limite, o tempo permanece ilimitado."
 interaction_type = "lamp"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Lamp" unique_id=714800403]

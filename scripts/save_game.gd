@@ -35,6 +35,20 @@ static func read_save(path: String = SAVE_PATH) -> Dictionary:
 	var world: Dictionary = parsed.get("world", {})
 	if not world.get("upgrades", {}) is Dictionary or not world.get("memories", {}) is Dictionary:
 		return {}
+	if not parsed.get("active_day", {}) is Dictionary:
+		return {}
+	var active_day: Dictionary = parsed.get("active_day", {})
+	if not active_day.is_empty():
+		if not active_day.get("customer") is Dictionary or not active_day.get("seen") is Array:
+			return {}
+		var active_customer: Dictionary = active_day.customer
+		if not active_customer.get("id") is String or not active_customer.get("requested_book") is String:
+			return {}
+		for field in ["clue", "memory", "offer_decisions"]:
+			if not active_customer.get(field, {}) is Dictionary:
+				return {}
+		if not active_customer.get("acceptable_books", []) is Array:
+			return {}
 	for quantities in parsed.inventory.values():
 		if not quantities is Dictionary:
 			return {}

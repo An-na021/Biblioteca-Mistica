@@ -10,6 +10,9 @@ func _ready() -> void:
 	add_child(game)
 	game._start_new_game()
 	game._set_relaxed_mode(true)
+	game.customer.profile_data.preferred_condition = "raro"
+	game.customer.request_clue = {"type": "caracteristica", "text": "Na última visita saí sem uma leitura. Vamos tentar de novo? Queria uma leitura com temas ligados à natureza. Não lembro o nome do livro."}
+	game.inventory.remove("jardim_horas", 1, "novo")
 	game.set_process(false)
 	game.customer_transitions.finish_arrival()
 	game._open_inventory()

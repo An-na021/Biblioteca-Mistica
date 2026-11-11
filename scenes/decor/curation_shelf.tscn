@@ -23,7 +23,7 @@ position = Vector2(1199, 1107)
 scale = Vector2(6.6666665, 6.6666665)
 script = ExtResource("2_interactable")
 interaction_name = "Estante de curadoria"
-description = "Uma estante dedicada às descobertas da casa. Permite negociar até 5% extras do preço de balcão."
+description = "Permite cobrar mais ao NEGOCIAR: soma 5% do preço de balcão ao limite aceito. Valor arredondado para baixo. Não altera o preço normal nem garante a venda."
 interaction_type = "curation_shelf"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ShelfHotspot"]

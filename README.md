@@ -73,11 +73,49 @@ No fechamento, abra **Livraria → Melhorias**. Cada melhoria é permanente, com
 
 | Melhoria | Preço | Benefício |
 | --- | --- | --- |
-| Luz de leitura | 18 moedas | +10 segundos de paciência |
-| Estante de curadoria | 26 moedas | Até 5% extras do preço de balcão no limite de negociação |
-| Jardim do balcão | 14 moedas | +6 pontos percentuais no interesse por recomendações compatíveis |
+| Luz de leitura | 18 moedas | Instala a luminária e acrescenta automaticamente 10 segundos à paciência de cada próximo cliente. No modo sem limite, o tempo permanece ilimitado. |
+| Estante de curadoria | 26 moedas | Ao usar **NEGOCIAR** no estoque, soma 5% do preço de balcão ao limite aceito pelo cliente, com o valor final arredondado para baixo. O preço normal não muda, e a venda não é garantida. |
+| Jardim do balcão | 14 moedas | Ao usar **OFERECER** para sugerir outra leitura, acrescenta 6 pontos percentuais à chance de aceitação de um livro com tema e condição adequados ao leitor. Não torna um livro incompatível aceitável nem garante a venda. |
 
 Os benefícios entram nos atendimentos do próximo dia.
+
+## Ateliê da livraria
+
+O botão **ATELIÊ**, no canto inferior esquerdo do balcão, leva a outro cômodo da livraria. Os três móveis fazem parte do cenário: passe o mouse sobre eles para identificar e destacar, e clique diretamente no armário, na mesa ou na vitrine para instalar ou usar. As ações abrem numa ficha ao lado do móvel escolhido. **Voltar ao ateliê**, um clique fora da ficha ou **Esc** fecha a ficha; **Voltar à livraria**, ou outro **Esc** no cômodo, retoma o expediente. O atendimento, a paciência e a fila ficam suspensos durante toda a visita.
+
+| Peça | Preço | Função |
+| --- | --- | --- |
+| Armário de encomendas | 30 moedas | Compre na loja o título e a condição encomendados. O armário protege automaticamente as cópias necessárias contra entrega, oferta e negociação para outros leitores; clique nele para conferir. O titular pode retirar sua encomenda. |
+| Mesa de restauração | 10 moedas | Clique na mesa, escolha um livro danificado e a condição final: **Usado, Novo ou Raro**. Confira o preço e use **ABRIR BANCADA**. Complete a limpeza, colagem, costura e prensagem para receber a condição escolhida. Limite de um restauro por dia; materiais cobrados somente ao concluir e incorporados ao custo do exemplar. Respeita as cópias protegidas pelo armário. |
+| Vitrine temática | 32 moedas | Clique na vitrine, escolha um tema e use **EXPOR ESTE TEMA**. Para cada próximo cliente, há 65% de chance de priorizar esse tema quando existem títulos compatíveis com seus gostos e bairro. Vale até trocar ou desativar; não cria livros nem garante vendas. Encomendas continuam pedindo o título e a condição combinados. |
+
+Cada peça é comprada uma única vez. O tema permanece até ser trocado ou desativado, e o restauro volta a ficar disponível no próximo dia. Compras e ações do ateliê salvam um ponto do expediente atual: ao continuar, o mesmo atendimento ou a espera pelo próximo leitor é recuperado, com estoque, moedas, vendas anteriores e paciência preservados. Partidas sem ações no ateliê mantêm o checkpoint de abertura do dia.
+
+Antes de abrir a bancada, o seletor de condição mostra o resultado e o orçamento de cada conserto:
+
+| Condição final | Materiais |
+| --- | --- |
+| Usado | 2 moedas |
+| Novo | A partir de 4 moedas |
+| Raro | A partir de 7 moedas |
+
+Os consertos superiores custam mais conforme o valor do livro. O preço mostrado na seleção, no cabeçalho e na conclusão é o valor total do conserto. **Abrir a bancada é gratuito**, inclusive com saldo zero; todas as condições continuam disponíveis para escolha. Se faltar saldo, a ficha informa quanto falta para concluir. O valor é cobrado uma única vez, somente quando a prensa termina e é aberta, e apenas se houver saldo para o conserto escolhido. A condição escolhida vale para aquele trabalho; cancelar preserva livro, moedas e limite diário. Um exemplar restaurado como Raro passa a atender os filtros e encomendas dessa condição normalmente.
+
+A bancada é uma atividade com ferramentas e ações sobre o livro:
+
+O pote de cola permanece visível durante todo o restauro. O pincel acompanha o cursor por toda a bancada quando selecionado e fica apoiado ao lado do pote ao usar outra ferramenta. A cola forma uma camada de tom marfim sobre as cerdas, com volume e pequenos reflexos; essa camada diminui conforme a cola é aplicada.
+
+1. **Pincel:** segure o botão do mouse e varra as três áreas empoeiradas do livro. Acompanhe a porcentagem de limpeza e a quantidade de áreas concluídas somente no painel lateral; não há círculos ou barras sobre as páginas. A limpeza exige passadas repetidas, inclusive nas laterais da poeira. Movimentos curtos e lentos também limpam; somente passar o cursor não remove poeira. O progresso tolera resíduos muito tênues, evitando que grãos quase invisíveis impeçam avançar para a cola. Pequenas partículas acompanham a pincelada e se dissipam no ar.
+2. **Cola:** clique na abertura do pote ou entre nela arrastando o pincel com o botão pressionado. Aguarde a animação curta: as cerdas descem na cola, fazem uma leve mexida e levantam com uma camada úmida; pequenas ondulações e um fio de cola acompanham a retirada. Só ao terminar o pincel fica carregado. Faça uma nova pincelada para contornar a borda de cada rasgo. A camada cresce mais devagar e exige passadas repetidas para cobrir a borda. Trocar de ferramenta ou perder o foco interrompe o mergulho sem conceder uma carga. A cola aparece somente onde o pincel passou; trechos secos impedem avançar. Cada carga cobre a borda inteira de um rasgo; recarregue para o próximo. Pincel seco não aplica cola, e apenas passar o cursor sobre o pote não o carrega.
+3. **Papel / rolete:** primeiro arraste os três remendos fibrosos da bandeja até os encaixes com o mesmo formato. Um encaixe errado faz o papel voltar suavemente. O rolete fica guardado até todos os papéis estarem no lugar; nesse momento ele é equipado automaticamente, e a instrução muda para assentar os remendos. Durante o assentamento, o rolete acompanha o cursor mesmo fora dos papéis. Mantenha o botão pressionado sobre cada remendo por cerca de 5 segundos, acompanhando o progresso apenas no painel lateral. Também pode passar o rolete em qualquer direção para acelerar o assentamento; o cilindro gira conforme o movimento e muda de sentido ao voltar. Mesmo com movimentos rápidos, cada remendo exige ao menos 3 segundos acumulados de pressão. A área de contato tem margem de tolerância e o progresso é preservado ao soltar ou sair do papel. Só encaixar ou passar o cursor sem pressionar não conclui o reparo. A costura é liberada após os três remendos estarem assentados.
+4. **Agulha e linha:** segure a agulha no furo dourado por um instante para atravessar o papel; depois arraste para fora da lombada, seguindo a seta, até puxar toda a linha e firmar o ponto. A linha atravessa o olho da agulha, forma uma alça e se acomoda sobre o papel. Um clique rápido ou uma puxada incompleta não conclui a passagem. Se soltar no meio, pegue a haste da agulha para continuar. Complete as oito passagens em ordem para formar quatro pontos e o nó final; a prensa abre somente com toda a costura firme.
+5. **Prensa:** clique no manípulo e arraste para a direita para girar o parafuso e baixar a placa sobre o livro. Pode soltar e pegar novamente o manípulo: o aperto fica na posição. Com o aperto completo, aguarde 3,5 segundos de secagem. Depois arraste para a esquerda até levantar completamente a placa e liberar o livro. Só então o exemplar volta ao estoque na condição escolhida, os materiais são cobrados pelo orçamento exibido e o restauro do dia é consumido. Girar de volta antes da secagem completa interrompe e reinicia a secagem; apenas segurar o mouse não gira a prensa.
+
+Ao concluir cada etapa, a bancada avança e seleciona automaticamente a próxima ferramenta. A cola nas bordas dos três rasgos seleciona **PAPEL**; o terceiro remendo alisado seleciona **AGULHA E LINHA**; o último ponto abre a **PRENSA**. A prensa acompanha os gestos com movimento suave e só inicia a secagem quando a placa encosta completamente. As ações sobre o livro continuam sendo feitas pelo jogador.
+
+**Voltar à mesa** ou **Esc** encerra a atividade. Sair antes de concluir preserva o exemplar, as moedas e o uso diário; o trabalho parcial recomeça na próxima tentativa. O atendimento continua suspenso durante a atividade. As artes e os prompts da bancada estão em [IMG/workshop/restoration_bench.md](IMG/workshop/restoration_bench.md).
+
+Exemplos: o armário evita vender a outro cliente a cópia rara que Mestre Elian encomendou; a mesa permite consertar um exemplar danificado do estoque; ao destacar **Magia** na vitrine, os próximos leitores têm mais chance de pedir livros desse tema. O armário não compra encomendas sozinho, e a vitrine não cria livros nem garante vendas. O cenário usa sombras e cores alinhadas à sala principal e acompanha a tonalidade do horário do jogo, preservando a legibilidade dos controles. A arte e o prompt atuais estão em [IMG/workshop/atelier_room_warm.md](IMG/workshop/atelier_room_warm.md).
 
 ## Eventos, histórias e encomendas
 

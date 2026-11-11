@@ -41,6 +41,8 @@ func run() -> void:
 	check(game.money == before + price + 8 and game.inventory.get_condition_quantity(book_id, condition) == stock - 1 and game.day_manager.served_today == 1, "Compra mantém cobrança, estoque e avanço da fila uma única vez")
 	check(game.sale_feedback.effects.has_node("SoldBook") and game.sale_feedback.get_node_or_null("DailyLedger") == null, "Venda mantém o livro em movimento sem escrever sobre o livro-caixa")
 	check(not game.customer.visible and game.customer_transitions.departures.size() == 1, "Cliente atendido sai em uma transição visual independente")
+	var feedback_stack: VBoxContainer = game.notifications.notification_stack
+	var last_feedback := feedback_stack.get_child(feedback_stack.get_child_count() - 1) as Control
 	check(game.get_node_or_null("ReaderKeepsakes") == null and int(game.world.memory(customer_id).purchases) == 3, "História continua avançando sem criar quadro de lembranças")
 	game._handle_stock_action(book_id, condition, "deliver", inventory_screen)
 	check(game.money == before + price + 8 and game.day_manager.served_today == 1, "Cliques repetidos não duplicam pagamentos nem atendimentos")
@@ -50,6 +52,10 @@ func run() -> void:
 	check(int(restored.memory(customer_id).purchases) == 3, "Salvamento conserva o progresso das histórias")
 	await create_timer(1.9).timeout
 	check(game.customer_transitions.departures.is_empty() and game.sale_feedback.effects.get_child_count() == 0, "Animações se limpam sem deixar textos permanentes sobre o cenário")
+	await create_timer(1.65).timeout
+	check(is_instance_valid(last_feedback) and last_feedback.modulate.a > 0.95, "Mensagem permanece legível depois do antigo prazo, com um segundo extra de leitura")
+	await create_timer(0.95).timeout
+	check(not is_instance_valid(last_feedback), "Mensagem desaparece ao terminar o novo prazo e a saída suave")
 	game._begin_day()
 	check(game.sale_feedback.get_node_or_null("DailyLedger") == null and game.get_node_or_null("ReaderKeepsakes") == null, "Novo expediente mantém as duas funcionalidades removidas")
 	game.customer_transitions.finish_arrival()

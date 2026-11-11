@@ -8,10 +8,28 @@ const TRAITS := {
 	"dificil": {"label": "Exigente", "patience": 55.0, "offers": 3, "markup": 1.15, "openness": -0.15, "hint": "É criterioso com recomendações e não gosta de insistência."}
 }
 const UPGRADES := {
-	"lighting": {"name": "Luz de leitura", "price": 18, "description": "Uma luminária com brilho âmbar. +10 segundos de paciência para todos os clientes."},
-	"shelves": {"name": "Estante de curadoria", "price": 26, "description": "Uma estante dedicada às descobertas da casa. Permite negociar até 5% extras do preço de balcão."},
-	"plants": {"name": "Jardim do balcão", "price": 14, "description": "Folhagens e flores para acolher os leitores. +6 pontos percentuais nas recomendações compatíveis."}
+	"lighting": {"name": "Luz de leitura", "price": 18,
+		"description": "Instala a luminária e dá +10 segundos de paciência a cada cliente.",
+		"usage": "Automático nos próximos atendimentos. No modo sem limite, o tempo permanece ilimitado."},
+	"shelves": {"name": "Estante de curadoria", "price": 26,
+		"description": "Permite cobrar mais ao NEGOCIAR: soma 5% do preço de balcão ao limite aceito.",
+		"usage": "Valor arredondado para baixo. Não altera o preço normal nem garante a venda."},
+	"plants": {"name": "Jardim do balcão", "price": 14,
+		"description": "Ao OFERECER uma alternativa compatível, aumenta a chance de aceitação em 6 pontos percentuais.",
+		"usage": "Exige tema e condição do gosto do leitor. Não garante a venda."},
+	"orders_cabinet": {"name": "Armário de encomendas", "price": 30,
+		"description": "Protege as cópias encomendadas: outro cliente não pode comprá-las, recebê-las ou negociá-las.",
+		"usage": "Compre o título e a condição pedidos na loja; a proteção é automática. Clique aqui para conferir. Só o titular retira a cópia."},
+	"restoration_table": {"name": "Mesa de restauração", "price": 10,
+		"description": "Conserta 1 exemplar Danificado por dia. Escolha a condição final: Usado, Novo ou Raro; quanto melhor, maior o custo.",
+		"usage": "Abrir a bancada é gratuito. Só o conserto escolhido é cobrado ao concluir. Respeita as cópias reservadas pelo armário."},
+	"themed_display": {"name": "Vitrine temática", "price": 32,
+		"description": "Define um tema, como Magia. Para cada próximo cliente, há 65% de chance de priorizar pedidos desse tema entre os livros compatíveis.",
+		"usage": "Escolha um tema e use EXPOR ESTE TEMA; vale até você trocar ou desativar. Respeita gostos e bairro, sem criar livros ou garantir vendas."}
 }
+const WORKSHOP_IDS := ["orders_cabinet", "restoration_table", "themed_display"]
+const RESTORATION_COST := 2
+const RESTORATION_TARGETS := ["usado", "novo", "raro"]
 const EVENTS := [
 	{"id": "ordinary", "name": "Dia de descobertas", "tags": [], "condition": "", "bonus": 0.0, "description": "Um dia tranquilo para conhecer os leitores e preparar as estantes."},
 	{"id": "maps", "name": "Caminhos e viagens", "tags": ["mapas", "viagem"], "condition": "", "bonus": 0.20, "description": "Leitores procuram mapas e relatos de viagem. Vendas desses temas rendem 20% de bônus."},
@@ -32,6 +50,94 @@ const STORIES := {
 
 var upgrades: Dictionary = {}
 var memories: Dictionary = {}
+var last_restoration_day := -1
+var display_theme := ""
+
+static func upgrade_description(upgrade_id: String) -> String:
+	var info: Dictionary = UPGRADES.get(upgrade_id, {})
+	return str(info.get("description", "")) + " " + str(info.get("usage", ""))
+
+func reserved_quantity(book_id: String, condition: String, collecting_customer := "") -> int:
+	var quantity := 0
+	for order in pending_orders():
+		if str(order.book_id) == book_id and str(order.condition) == condition and str(order.customer_id) != collecting_customer:
+			quantity += 1
+	return quantity
+
+func available_for_customer(inventory: Inventory, book_id: String, condition: String, customer_id := "") -> int:
+	var quantity := inventory.get_condition_quantity(book_id, condition)
+	if upgrades.has("orders_cabinet"):
+		var available := quantity - reserved_quantity(book_id, condition, customer_id)
+		var own_order: Dictionary = memory(customer_id).get("order", {})
+		if quantity > 0 and str(own_order.get("book_id", "")) == book_id and str(own_order.get("condition", "")) == condition:
+			available = maxi(1, available)
+		quantity = available
+	return maxi(0, quantity)
+
+func restorable_books(inventory: Inventory) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for book in BookCatalog.all_books():
+		if available_for_customer(inventory, str(book.id), "danificado") > 0:
+			result.append(book)
+	return result
+
+static func restoration_cost(book_id: String, target_condition := "usado") -> int:
+	var book := BookCatalog.get_book(book_id)
+	if book.is_empty() or target_condition not in RESTORATION_TARGETS:
+		return -1
+	if target_condition == "usado":
+		return RESTORATION_COST
+	var value_difference := BookCatalog.price_for_condition(book, target_condition, "buy_price") - BookCatalog.price_for_condition(book, "usado", "buy_price")
+	var minimum_cost := 4 if target_condition == "novo" else 7
+	return maxi(minimum_cost, RESTORATION_COST + value_difference)
+
+func restore_book(inventory: Inventory, book_id: String, day: int, funds: int, target_condition := "usado", quoted_cost := -1) -> int:
+	var materials_cost := restoration_cost(book_id, target_condition)
+	if materials_cost < 0 or (quoted_cost >= 0 and quoted_cost != materials_cost):
+		return -1
+	if not upgrades.has("restoration_table") or day < 1 or last_restoration_day == day or funds < materials_cost:
+		return -1
+	if BookCatalog.get_book(book_id).is_empty() or available_for_customer(inventory, book_id, "danificado") <= 0:
+		return -1
+	var cost := inventory.get_unit_cost(book_id, "danificado") + materials_cost
+	if not inventory.remove(book_id, 1, "danificado"):
+		return -1
+	inventory.add(book_id, 1, target_condition, cost)
+	last_restoration_day = day
+	return materials_cost
+
+func set_display_theme(value: String) -> bool:
+	if not upgrades.has("themed_display"):
+		return false
+	if not value.is_empty():
+		var valid := false
+		for book in BookCatalog.all_books():
+			if book.get("tags", []).has(value):
+				valid = true
+				break
+		if not valid:
+			return false
+	display_theme = value
+	return true
+
+func request_pool(books: Array[Dictionary], day: int, condition: String, display_roll := -1.0, event_roll := -1.0) -> Array[Dictionary]:
+	if upgrades.has("themed_display") and not display_theme.is_empty():
+		var displayed: Array[Dictionary] = []
+		for book in books:
+			if book.get("tags", []).has(display_theme):
+				displayed.append(book)
+		if not displayed.is_empty() and (randf() if display_roll < 0 else display_roll) < 0.65:
+			return displayed
+	var event_books: Array[Dictionary] = []
+	var event := event_for_day(day)
+	for book in books:
+		var copy := book.duplicate()
+		copy["condition"] = condition
+		if event_matches(event, copy):
+			event_books.append(book)
+	if not event_books.is_empty() and (randf() if event_roll < 0 else event_roll) < 0.75:
+		return event_books
+	return books
 
 static func get_traits(mood: String) -> Dictionary:
 	return TRAITS.get(mood, TRAITS.indeciso).duplicate(true)
@@ -141,8 +247,10 @@ func story_text(customer_id: String) -> String:
 	return str(STORIES[customer_id][mini(purchases, 3)])
 
 func serialize() -> Dictionary:
-	return {"upgrades": upgrades.duplicate(true), "memories": memories.duplicate(true)}
+	return {"upgrades": upgrades.duplicate(true), "memories": memories.duplicate(true), "last_restoration_day": last_restoration_day, "display_theme": display_theme}
 
 func restore(data: Dictionary) -> void:
 	upgrades = data.get("upgrades", {}).duplicate(true)
 	memories = data.get("memories", {}).duplicate(true)
+	last_restoration_day = int(data.get("last_restoration_day", -1))
+	display_theme = str(data.get("display_theme", ""))

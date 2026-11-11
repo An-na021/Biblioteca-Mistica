@@ -1,0 +1,20 @@
+# Prensa articulada da bancada
+
+Arte ativa: [restoration_press_parts.png](restoration_press_parts.png), criada com a ferramenta integrada ImageGen, com transparência real. Referência: [restoration_press.png](restoration_press.png).
+
+O atlas contém estrutura fixa, placa de pressão, manípulo e a primeira versão do livro deitado, em quatro quadrantes. O jogo usa as três peças da prensa por regiões da textura original, sem regravar a imagem. O livro ativo foi substituído por [restoration_closed_book.png](restoration_closed_book.png), com lombada contínua de couro: a mesma face não mistura lombada e páginas. A capa do exemplar selecionado é projetada sobre a face superior. O livro não faz parte da estrutura fixa.
+
+O mecanismo em `scripts/restoration_press.gd` mantém a estrutura parada, gira os cabos em perspectiva, desloca o parafuso e a placa juntos e comprime levemente o volume ao atingir o aperto completo. A rosca mantém a posição quando o mouse é solto. São necessárias duas voltas para apertar, dois segundos sob pressão para secar e duas voltas no sentido contrário para abrir. A cobrança e a alteração de estoque acontecem somente depois da abertura completa; sair antes disso preserva o exemplar e o dinheiro.
+
+Prompt final (ImageGen integrada):
+
+```text
+Use case: precise-object-edit.
+Asset type: production 2D GAME SPRITE ATLAS, square canvas divided into four equal square quadrants, true transparent background throughout. Use the reference press only as style, materials, perspective reference.
+Primary request: Turn the referenced beautiful antique walnut bookbinder screw press into FOUR SEPARATE mechanical sprites, ONE per quadrant, no touching between quadrants, no text, no numbers, no gridlines. All parts have matching front view with slight top-down perspective, warm upper-left amber light, detailed hand-inked fantasy bookstore illustration, walnut wood grain, worn brass, dark iron brackets, crisp dark outlines. Genuine alpha transparency around each separate part AND inside the empty frame.
+TOP LEFT quadrant: ONLY THE FIXED FRAME of the standing press, full width wooden plinth/base, two elegant turned walnut side posts, a thick curved walnut crossbeam bolted with black iron straps. Exactly like reference materials. LARGE EMPTY TRANSPARENT OPENING between posts. NO screw, NO handle, NO platen, NO book. Frame completely within this quadrant with 7% margin, tall almost-square proportions. Plinth top clearly visible and horizontal at bottom. Upper crossbeam around upper third, posts and empty opening below.
+TOP RIGHT quadrant: ONLY THE MOVING PRESSURE PLATEN, a broad horizontal thick rectangular polished walnut board, chamfered edges, top face visible in same perspective. Small brass circular screw socket centered on the TOP face. No shaft, no book, no frame. Width ~84% quadrant, thickness including top face ~25% quadrant, centered. Transparent below and around.
+BOTTOM LEFT quadrant: ONLY THE ROTATING T HANDLE, a horizontal brass bar with bulbous turned dark walnut grips at BOTH ends and small cylindrical brass hub in center, little round brass finial on top of hub. No threaded screw underneath, no frame. Width ~84% quadrant and height ~24% quadrant, centered, symmetric silhouette. Front view same style. Transparent around.
+BOTTOM RIGHT quadrant: ONLY A CLOSED RESTORED LEATHER BOOK LYING FLAT HORIZONTALLY, a natural credible rectangular book with a wide ivory page block visibly distinct from leather binding at the front edge. Plain dark brown leather cover with no emblem or text. Front spine on left portion, paper edges on right, gentle visible top cover in matching perspective. Width ~76% quadrant height ~27% quadrant, centered. Rectangular bound volume, no random warped or doubled page blocks, no press.
+Constraints: four beautifully finished isolated game components, transparent outside all silhouettes, no baked cast shadows outside sprites, no tabletop, no environment, no people, no watermark, no labels. The fixed frame must have empty transparency inside; all moving components separate. Keep reference's professional antique handcrafted finish.
+```

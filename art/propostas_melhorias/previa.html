@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Novas peças para a livraria — proposta</title>
+<style>
+:root { color-scheme: dark; --ink:#f1dfbb; --muted:#baa788; --edge:#655033; --stage:#211a13; }
+* { box-sizing:border-box; }
+body { margin:0; background:#15120e; color:var(--ink); font-family:Georgia,"Times New Roman",serif; }
+main { max-width:1480px; margin:auto; padding:42px 32px 32px; }
+.kicker { color:#c9a269; text-transform:uppercase; letter-spacing:.18em; font:12px Arial,sans-serif; }
+h1 { font-weight:normal; font-size:clamp(30px,4vw,48px); margin:14px 0 12px; }
+.intro { color:var(--muted); max-width:760px; line-height:1.65; font-size:17px; margin:0; }
+.toolbar { display:flex; align-items:center; gap:8px; margin:26px 0 22px; font:13px Arial,sans-serif; color:var(--muted); flex-wrap:wrap; }
+button { padding:9px 14px; border:1px solid var(--edge); background:transparent; color:var(--ink); cursor:pointer; border-radius:4px; }
+button[aria-pressed="true"] { background:#594126; border-color:#bc955e; color:#fff2d7; }
+.grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+article { border:1px solid #4b3b28; background:#211b14; border-radius:9px; overflow:hidden; }
+.figure { height:390px; background:var(--stage); padding:24px; display:flex; align-items:center; justify-content:center; }
+.figure img { display:block; width:100%; height:100%; object-fit:contain; }
+.figure.checker { background-color:#655f55; background-image:linear-gradient(45deg,#878074 25%,transparent 25%),linear-gradient(-45deg,#878074 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#878074 75%),linear-gradient(-45deg,transparent 75%,#878074 75%); background-size:24px 24px; background-position:0 0,0 12px,12px -12px,-12px 0; }
+.caption { padding:23px 24px 26px; border-top:1px solid #4b3b28; }
+.number { color:#be965f; font:11px Arial,sans-serif; letter-spacing:.16em; }
+h2 { font-weight:normal; margin:9px 0 12px; font-size:25px; }
+.caption p { margin:0; line-height:1.65; font-size:16px; color:#cfbea1; }
+.caption a { display:inline-block; margin-top:18px; font:13px Arial,sans-serif; color:#e7c58e; text-underline-offset:4px; }
+footer { padding:25px 0 4px; color:var(--muted); font:13px/1.7 Arial,sans-serif; }
+footer strong { color:#e6cfaa; font-weight:normal; }
+@media(max-width:1000px) { main{padding:28px 20px;} .grid{gap:12px;} .figure{height:310px;padding:16px;} .caption{padding:18px;} h2{font-size:22px;} }
+@media(max-width:720px) { .grid{grid-template-columns:1fr;} .figure{height:400px;} }
+</style>
+</head>
+<body>
+<main>
+<div class="kicker">Estudos de arte · Aguardando sua aprovação</div>
+<h1>Novas peças para a livraria</h1>
+<p class="intro">Três propostas em madeira envelhecida, latão e luz âmbar. As imagens têm fundo transparente e foram preparadas para combinar com a atmosfera da loja.</p>
+<div class="toolbar"><span>Comparar sobre:</span><button data-bg="dark" aria-pressed="true">Fundo escuro</button><button data-bg="paper" aria-pressed="false">Papel</button><button data-bg="checker" aria-pressed="false">Transparência</button></div>
+<div class="grid">
+<article><div class="figure"><img src="armario_encomendas.png" alt="Armário de madeira com seis nichos, livros embrulhados e etiquetas de reserva"></div><div class="caption"><div class="number">PEÇA 01</div><h2>Armário de encomendas</h2><p>Separa os exemplares reservados por título e condição, protegendo as cópias necessárias até a retirada de cada leitor.</p><a href="armario_encomendas.png">Abrir arte original ↗</a></div></article>
+<article><div class="figure"><img src="mesa_restauracao.png" alt="Mesa de restaurador com livro aberto, prensa de madeira, cola e pincel"></div><div class="caption"><div class="number">PEÇA 02</div><h2>Mesa de restauração</h2><p>Recupera um livro danificado por dia para a condição Usado. Proposta: 2 moedas em materiais por restauração.</p><a href="mesa_restauracao.png">Abrir arte original ↗</a></div></article>
+<article><div class="figure"><img src="vitrine_tematica.png" alt="Vitrine de madeira e vidro com um livro em destaque"></div><div class="caption"><div class="number">PEÇA 03</div><h2>Vitrine temática</h2><p>Destaca um tema escolhido para o expediente, aumentando a chance de pedidos compatíveis com o tema e com os gostos dos leitores.</p><a href="vitrine_tematica.png">Abrir arte original ↗</a></div></article>
+</div>
+<footer><strong>Proposta, ainda sem integração ao jogo.</strong> Os itens aparecerão no cenário somente após a compra da melhoria. Posição, proporção, preço de aquisição e ajustes finais de luz serão definidos durante a implementação, após sua aprovação. As imagens acima usam tamanho de apresentação, não a escala final do cenário.<br>Artes criadas com a ferramenta integrada image_gen. <a href="prompts.json" style="color:#d9b884">Prompts utilizados</a>.</footer>
+</main>
+<script>
+document.querySelectorAll("button[data-bg]").forEach(button => button.addEventListener("click", () => {
+ document.querySelectorAll("button[data-bg]").forEach(item => item.setAttribute("aria-pressed",String(item===button)));
+ document.querySelectorAll(".figure").forEach(figure => {
+  figure.classList.toggle("checker",button.dataset.bg==="checker");
+  figure.style.setProperty("--stage",button.dataset.bg==="paper" ? "#ead5ae" : "#211a13");
+ });
+}));
+</script>
+</body>
+</html>
+
