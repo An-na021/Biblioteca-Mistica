@@ -33,7 +33,7 @@ func play_sale(book: Dictionary, received: int, customer_point: Vector2) -> void
 	var destination := _world_point(customer_point)
 	var cover := TextureRect.new()
 	cover.name = "SoldBook"
-	cover.texture = book.get("cover_texture") as Texture2D
+	preload("res://scripts/book_cover_art.gd").apply(cover, book, str(book.get("condition", "novo")))
 	cover.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	cover.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	cover.size = Vector2(59, 82)

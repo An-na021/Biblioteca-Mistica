@@ -21,8 +21,8 @@ const UPGRADES := {
 		"description": "Protege as cópias encomendadas: outro cliente não pode comprá-las, recebê-las ou negociá-las.",
 		"usage": "Compre o título e a condição pedidos na loja; a proteção é automática. Clique aqui para conferir. Só o titular retira a cópia."},
 	"restoration_table": {"name": "Mesa de restauração", "price": 10,
-		"description": "Conserta 1 exemplar Danificado por dia. Escolha a condição final: Usado, Novo ou Raro; quanto melhor, maior o custo.",
-		"usage": "Abrir a bancada é gratuito. Só o conserto escolhido é cobrado ao concluir. Respeita as cópias reservadas pelo armário."},
+		"description": "Por dia, conserte 1 livro do estoque e 1 encomenda de cliente: até 2 consertos. No estoque, escolha Usado, Novo ou Raro.",
+		"usage": "O diagnóstico define as etapas. Abrir é gratuito; materiais só ao concluir. Consulte propostas, prazos e pagamentos em ENCOMENDAS DE RESTAURO."},
 	"themed_display": {"name": "Vitrine temática", "price": 32,
 		"description": "Define um tema, como Magia. Para cada próximo cliente, há 65% de chance de priorizar pedidos desse tema entre os livros compatíveis.",
 		"usage": "Escolha um tema e use EXPOR ESTE TEMA; vale até você trocar ou desativar. Respeita gostos e bairro, sem criar livros ou garantir vendas."}
@@ -51,7 +51,23 @@ const STORIES := {
 var upgrades: Dictionary = {}
 var memories: Dictionary = {}
 var last_restoration_day := -1
+var last_contract_restoration_day := -1
 var display_theme := ""
+var restoration_jobs := preload("res://scripts/restoration_jobs.gd").new()
+
+func offer_restoration(profile: Dictionary, book: Dictionary, day: int) -> Dictionary:
+	if not upgrades.has("restoration_table"):
+		return {}
+	var condition := str(RESTORATION_TARGETS[(maxi(2, day) - 2) % RESTORATION_TARGETS.size()])
+	return restoration_jobs.offer(profile, book, day, restoration_cost(str(book.get("id", "")), condition), condition)
+
+func finish_restoration_job(id: String, day: int, funds: int, quote: int) -> int:
+	if not upgrades.has("restoration_table") or last_contract_restoration_day == day:
+		return -1
+	var cost: int = restoration_jobs.finish(id, day, funds, quote)
+	if cost >= 0:
+		last_contract_restoration_day = day
+	return cost
 
 static func upgrade_description(upgrade_id: String) -> String:
 	var info: Dictionary = UPGRADES.get(upgrade_id, {})
@@ -247,10 +263,14 @@ func story_text(customer_id: String) -> String:
 	return str(STORIES[customer_id][mini(purchases, 3)])
 
 func serialize() -> Dictionary:
-	return {"upgrades": upgrades.duplicate(true), "memories": memories.duplicate(true), "last_restoration_day": last_restoration_day, "display_theme": display_theme}
+	return {"upgrades": upgrades.duplicate(true), "memories": memories.duplicate(true), "last_restoration_day": last_restoration_day, "last_contract_restoration_day": last_contract_restoration_day, "display_theme": display_theme, "restoration_jobs": restoration_jobs.serialize()}
 
 func restore(data: Dictionary) -> void:
 	upgrades = data.get("upgrades", {}).duplicate(true)
 	memories = data.get("memories", {}).duplicate(true)
 	last_restoration_day = int(data.get("last_restoration_day", -1))
+	# Old saves had a shared limit: preserve that day's usage for both categories.
+	last_contract_restoration_day = int(data.get("last_contract_restoration_day", last_restoration_day))
 	display_theme = str(data.get("display_theme", ""))
+	var jobs: Variant = data.get("restoration_jobs", {})
+	restoration_jobs.restore(jobs if jobs is Dictionary else {})

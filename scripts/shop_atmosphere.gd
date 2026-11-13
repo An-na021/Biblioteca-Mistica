@@ -16,12 +16,16 @@ var desk_lamp_emission: Polygon2D
 var daylight: CanvasModulate
 var motes: Array[Vector4] = []
 var lamp_materials: Array[ShaderMaterial] = []
+var weather: Node2D
 
 func _ready() -> void:
 	z_index = 3
 	daylight = CanvasModulate.new()
 	daylight.name = "Daylight"
 	add_child(daylight)
+	weather = preload("res://scripts/shop_weather.gd").new()
+	weather.name = "Weather"
+	add_child(weather)
 	_add_lamp_emission()
 	var random := RandomNumberGenerator.new()
 	random.seed = 4318
@@ -84,6 +88,7 @@ func reset_day() -> void:
 	set_day_progress(0.0, true)
 
 func _process(delta: float) -> void:
+	weather.active = animations_active
 	if not animations_active:
 		return
 	animation_time += delta
@@ -94,10 +99,10 @@ func _process(delta: float) -> void:
 
 func _apply_daylight() -> void:
 	if daylight != null:
-		daylight.color = color_for_progress(day_progress)
+		daylight.color = color_for_progress(day_progress) * (weather.room_tint() if weather != null else Color.WHITE)
 
 func _draw() -> void:
-	var sun := 1.0 - smoothstep(0.55, 1.0, day_progress)
+	var sun := (1.0 - smoothstep(0.55, 1.0, day_progress)) * (0.3 if weather != null and weather.kind == "rain" else 0.65 if weather != null and weather.kind == "cloudy" else 1.0)
 	var drift := day_progress * 36.0
 	# Broad, faint shafts follow the direction of the painted window light.
 	for index in range(7):

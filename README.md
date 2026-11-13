@@ -44,10 +44,12 @@ O salvamento automático usa `user://biblioteca_save.json`, na pasta de dados do
 - Oito personagens com retratos, gostos, histórias e preferências de condição.
 - Pedidos por título, autor ou pistas de temas.
 - Oito livros, com exemplares novos, usados, danificados ou raros.
-- Três a quatro clientes por dia, conforme o bairro, sem repetição no mesmo dia. Intervalos de três a seis segundos e aviso final de cinco segundos.
+- Capas acompanham a condição selecionada: **Danificado** tem rasgos, cantos gastos e lombada solta; **Usado**, desgaste leve; **Novo**, acabamento conservado; **Raro**, cantoneiras, filetes e selo dourados. A ilustração de cada título é preservada. O visual aparece no estoque, na loja, na entrega ao leitor e no resultado da restauração.
+- Três a quatro clientes por dia, conforme o bairro, sem repetição nas visitas comuns. Retiradas de restauro agendadas podem trazer um leitor de volta e acrescentam uma vaga quando necessário. Intervalos de três a seis segundos e aviso final de cinco segundos.
 - Uma lista única de livros para comprar pelo carrinho no fechamento de cada dia. A loja reúne as ofertas dos três fornecedores e usa o menor preço disponível para cada condição.
 - Três bairros com catálogos e clientes diferentes, desbloqueados por dia ou reputação.
 - Metas diárias e semanais, conquistas e resumo de vendas, lucro e reputação.
+- Diagnósticos de restauração com trabalhos diferentes, encomendas de conserto dos leitores, expressões discretas dos clientes e clima com sons exteriores.
 
 ## Personalidades e recomendações
 
@@ -86,7 +88,7 @@ O botão **ATELIÊ**, no canto inferior esquerdo do balcão, leva a outro cômod
 | Peça | Preço | Função |
 | --- | --- | --- |
 | Armário de encomendas | 30 moedas | Compre na loja o título e a condição encomendados. O armário protege automaticamente as cópias necessárias contra entrega, oferta e negociação para outros leitores; clique nele para conferir. O titular pode retirar sua encomenda. |
-| Mesa de restauração | 10 moedas | Clique na mesa, escolha um livro danificado e a condição final: **Usado, Novo ou Raro**. Confira o preço e use **ABRIR BANCADA**. Complete a limpeza, colagem, costura e prensagem para receber a condição escolhida. Limite de um restauro por dia; materiais cobrados somente ao concluir e incorporados ao custo do exemplar. Respeita as cópias protegidas pelo armário. |
+| Mesa de restauração | 10 moedas | Clique na mesa, escolha um livro danificado e a condição final: **Usado, Novo ou Raro**. Confira diagnóstico e preço e use **ABRIR BANCADA**. Complete as etapas indicadas para receber a condição escolhida. Também atende encomendas de livros dos clientes. Limites separados: um livro do estoque e uma encomenda de cliente por dia (até dois consertos); materiais cobrados somente ao concluir. Nos livros do estoque, entram no custo do exemplar; cópias protegidas pelo armário são respeitadas. |
 | Vitrine temática | 32 moedas | Clique na vitrine, escolha um tema e use **EXPOR ESTE TEMA**. Para cada próximo cliente, há 65% de chance de priorizar esse tema quando existem títulos compatíveis com seus gostos e bairro. Vale até trocar ou desativar; não cria livros nem garante vendas. Encomendas continuam pedindo o título e a condição combinados. |
 
 Cada peça é comprada uma única vez. O tema permanece até ser trocado ou desativado, e o restauro volta a ficar disponível no próximo dia. Compras e ações do ateliê salvam um ponto do expediente atual: ao continuar, o mesmo atendimento ou a espera pelo próximo leitor é recuperado, com estoque, moedas, vendas anteriores e paciência preservados. Partidas sem ações no ateliê mantêm o checkpoint de abertura do dia.
@@ -99,7 +101,7 @@ Antes de abrir a bancada, o seletor de condição mostra o resultado e o orçame
 | Novo | A partir de 4 moedas |
 | Raro | A partir de 7 moedas |
 
-Os consertos superiores custam mais conforme o valor do livro. O preço mostrado na seleção, no cabeçalho e na conclusão é o valor total do conserto. **Abrir a bancada é gratuito**, inclusive com saldo zero; todas as condições continuam disponíveis para escolha. Se faltar saldo, a ficha informa quanto falta para concluir. O valor é cobrado uma única vez, somente quando a prensa termina e é aberta, e apenas se houver saldo para o conserto escolhido. A condição escolhida vale para aquele trabalho; cancelar preserva livro, moedas e limite diário. Um exemplar restaurado como Raro passa a atender os filtros e encomendas dessa condição normalmente.
+Os consertos superiores custam mais conforme o valor do livro. O preço mostrado na seleção, no cabeçalho e na conclusão é o valor total do conserto. **Abrir a bancada é gratuito**, inclusive com saldo zero; todas as condições continuam disponíveis para escolha nos livros do estoque. Se faltar saldo, a ficha informa quanto falta para concluir. O valor é cobrado uma única vez ao terminar a última etapa do diagnóstico, apenas se houver saldo para o conserto escolhido. Nos trabalhos com prensa, é necessário secar e liberar o livro antes de concluir. A condição escolhida vale para aquele trabalho; cancelar preserva livro, moedas e limite diário. Um exemplar do estoque restaurado como Raro passa a atender os filtros e encomendas dessa condição normalmente.
 
 A bancada é uma atividade com ferramentas e ações sobre o livro:
 
@@ -111,7 +113,17 @@ O pote de cola permanece visível durante todo o restauro. O pincel acompanha o 
 4. **Agulha e linha:** segure a agulha no furo dourado por um instante para atravessar o papel; depois arraste para fora da lombada, seguindo a seta, até puxar toda a linha e firmar o ponto. A linha atravessa o olho da agulha, forma uma alça e se acomoda sobre o papel. Um clique rápido ou uma puxada incompleta não conclui a passagem. Se soltar no meio, pegue a haste da agulha para continuar. Complete as oito passagens em ordem para formar quatro pontos e o nó final; a prensa abre somente com toda a costura firme.
 5. **Prensa:** clique no manípulo e arraste para a direita para girar o parafuso e baixar a placa sobre o livro. Pode soltar e pegar novamente o manípulo: o aperto fica na posição. Com o aperto completo, aguarde 3,5 segundos de secagem. Depois arraste para a esquerda até levantar completamente a placa e liberar o livro. Só então o exemplar volta ao estoque na condição escolhida, os materiais são cobrados pelo orçamento exibido e o restauro do dia é consumido. Girar de volta antes da secagem completa interrompe e reinicia a secagem; apenas segurar o mouse não gira a prensa.
 
-Ao concluir cada etapa, a bancada avança e seleciona automaticamente a próxima ferramenta. A cola nas bordas dos três rasgos seleciona **PAPEL**; o terceiro remendo alisado seleciona **AGULHA E LINHA**; o último ponto abre a **PRENSA**. A prensa acompanha os gestos com movimento suave e só inicia a secagem quando a placa encosta completamente. As ações sobre o livro continuam sendo feitas pelo jogador.
+O **diagnóstico**, mostrado antes de abrir e na bancada, define quais dessas etapas são necessárias. Há livros apenas empoeirados, com rasgos, com lombada solta, com poeira e costura frouxa ou com danos completos. As ferramentas dispensadas ficam desabilitadas, e o contador mostra somente as etapas desse trabalho. O diagnóstico permanece igual ao reabrir o mesmo título no mesmo dia; nas encomendas do cliente, fica fixo desde a proposta. O preço continua sendo o orçamento da condição final, sem taxa de abertura.
+
+Ao concluir cada etapa necessária, a bancada avança e seleciona automaticamente a próxima ferramenta. A colagem inclui encaixe, assentamento e secagem na prensa; a costura só aparece quando a lombada precisa dela. Livros que precisam apenas de limpeza terminam ao remover a poeira. A prensa acompanha os gestos com movimento suave e só inicia a secagem quando a placa encosta completamente. Cerdas, cola, papel, linha, rolete e parafuso têm sons discretos sincronizados às ações; sons de fricção cessam ao interromper o movimento, e a perda de foco silencia as ferramentas.
+
+### Encomendas de restauração
+
+Com a mesa instalada, leitores podem trazer **livros próprios a partir do dia 2**. No máximo uma proposta nova aparece por dia, com até três propostas/trabalhos pendentes. Abra **ATELIÊ → ENCOMENDAS DE RESTAURO** para conferir e aceitar ou recusar. É possível manter dois trabalhos aceitos ao mesmo tempo.
+
+Cada ficha informa o diagnóstico, a condição solicitada, os materiais, o prazo (três dias após a proposta), o pagamento e a reputação. O cliente já escolheu a condição final. Abrir é gratuito; os materiais são cobrados uma vez ao terminar o serviço. Volte à lista, escolha um dia até o prazo e use **AGENDAR ENTREGA**. O leitor terá prioridade na fila no dia marcado, mesmo após uma mudança de bairro. Com o titular presente na loja, a partir do dia agendado e até o prazo, use **ENTREGAR E RECEBER** para devolver o livro e receber o pagamento e a reputação. Agendar não paga a recompensa; é possível reagendar dentro do prazo. Se o leitor não retirar no dia marcado, retorna nos dias seguintes enquanto o prazo estiver válido. O pagamento devolve o custo dos materiais e acrescenta 6, 8 ou 10 moedas de serviço para Usado, Novo ou Raro; a reputação aumenta em 1, 1 ou 2, respectivamente. Esses recebimentos ficam separados do lucro das vendas do estoque.
+
+Os exemplares pertencem aos leitores e ficam separados do estoque e das reservas de compra. Os limites são independentes: **uma encomenda de cliente e um livro do estoque por dia**, totalizando até dois consertos. Cada encomenda só pode ser restaurada uma vez. Ao passar do prazo, a encomenda é cancelada sem recompensa. Aceites, serviços concluídos, agendamentos e entregas ficam salvos; reabrir ou clicar novamente não duplica a cobrança nem o pagamento.
 
 **Voltar à mesa** ou **Esc** encerra a atividade. Sair antes de concluir preserva o exemplar, as moedas e o uso diário; o trabalho parcial recomeça na próxima tentativa. O atendimento continua suspenso durante a atividade. As artes e os prompts da bancada estão em [IMG/workshop/restoration_bench.md](IMG/workshop/restoration_bench.md).
 
@@ -130,6 +142,12 @@ Clientes também podem reservar um pedido sem estoque antes da primeira compra. 
 Memórias, encomendas e melhorias são salvas nos mesmos pontos de abertura e fechamento dos dias. Salvamentos anteriores a esses sistemas continuam compatíveis. Os presentes das histórias e encomendas aumentam o saldo, separados do lucro das vendas de livros.
 
 O resumo distingue **erros de atendimento** (tentativas recusadas e saídas sem compra) de **clientes sem venda**. A meta de dia sem erros usa o primeiro indicador.
+
+## Expressões, clima e som
+
+Os oito retratos possuem movimentos discretos de respiração e postura, com mudanças locais na boca e nas sobrancelhas. Vendas aceitas produzem satisfação; recusas e contrapropostas, dúvida; a proximidade do fim da paciência produz inquietação. O modo tranquilo remove a impaciência por tempo. Essas animações preservam as áreas de clique e as regras de atendimento.
+
+O clima alterna entre céu aberto, nuvens e chuva conforme o dia da partida, mantendo a mesma previsão ao continuar um salvamento. Gotas percorrem os vidros; nuvens suavizam a luz e projetam sombras no chão. A janela ampliada acompanha o mesmo clima e a iluminação da sala. Chuva, vento, pássaros e ruídos distantes da rua ficam em volume baixo. A pausa suspende o ambiente e silencia os sons externos; visitar o ateliê suspende o atendimento e usa somente os sons das ferramentas. Os sons são texturas originais sintetizadas no jogo, sem downloads.
 
 ## Organização
 
@@ -171,6 +189,11 @@ Para gerar capturas das telas durante a mesma verificação:
 godot --path . --script tests/test_game.gd --log-file .godot/visual_tests.log -- --screenshots
 godot --path . --script tests/test_world.gd --log-file .godot/world_visual_tests.log -- --screenshots
 godot --path . --script tests/test_reservations.gd --log-file .godot/reservations_visual_tests.log -- --screenshots
+godot --path . --script tests/test_book_cover_art.gd --log-file .godot/book_cover_tests.log -- --screenshots
+godot --path . --script tests/test_restoration_expansion.gd --log-file .godot/restoration_expansion.log -- --screenshots
 ```
 
 As imagens ficam em `.godot/preview_*.png`.
+
+O teste de capas também grava `.godot/cover_*.png`: confere os quatro acabamentos nos oito títulos, a troca por condição no estoque e na loja e o resultado visual da restauração. Execute sem `--headless` para validar os pixels renderizados e gerar as capturas.
+

@@ -256,6 +256,8 @@ func _process(delta: float) -> void:
 		mood_timer.visible = customer_active and not relaxed_mode and active_overlay == null
 	if active_overlay is InventoryScreen or active_overlay is NegotiationUI:
 		active_overlay.set_time_left(customer_time_left, relaxed_mode)
+	if customer_active and is_instance_valid(customer.expression_driver):
+		customer.expression_driver.set_patience(customer_time_left / maxf(1, customer_time_limit), relaxed_mode)
 	if not customer_active or relaxed_mode or active_overlay is CustomerProfilePanel:
 		return
 	customer_time_left = maxf(0.0, customer_time_left - delta)
@@ -283,6 +285,8 @@ func _update_atmosphere(delta: float) -> void:
 func _customer_service_timed_out() -> void:
 	if customer == null or not customer.visible or not store_is_open:
 		return
+	if is_instance_valid(customer.expression_driver):
+		customer.expression_driver.react(false, true)
 	_depart_customer()
 	day_errors += 1
 	day_failed_customers += 1
@@ -357,6 +361,8 @@ func _open_window(image: Texture2D = null) -> void:
 	if active_overlay != null or not game_menu.in_game or get_tree().paused:
 		return
 	var screen := WindowScreenScene.instantiate()
+	screen.weather_kind = str(atmosphere.weather.kind)
+	screen.ambient_tint = atmosphere.daylight.color
 	if image != null:
 		screen.image = image
 	active_overlay = screen
@@ -387,6 +393,9 @@ func _show_customer_profile() -> void:
 
 func _on_customer_ready(index: int, total: int) -> void:
 	ambient_service_seconds = 0.0
+	var pickups: Array = world.restoration_jobs.pickups_for_day(day_manager.day)
+	day_manager.customers_today = maxi(day_manager.customers_today, index + pickups.size() - 1)
+	total = day_manager.customers_today
 	if index == 1:
 		progression.begin_day(day_manager.day, total)
 	var available_profiles: Array[Dictionary] = []
@@ -396,6 +405,15 @@ func _on_customer_ready(index: int, total: int) -> void:
 		var candidate_id := str(candidate.get("id", candidate.get("name", "")))
 		if district_customer_ids.has(candidate_id) and not customer_ids_seen_today.has(candidate_id):
 			available_profiles.append(candidate)
+	# Appointments take priority and follow the reader even after a district change.
+	var appointment_profile: Dictionary = {}
+	if not pickups.is_empty():
+		for candidate in customer_profiles:
+			if str(candidate.id) == str(pickups[0].customer_id):
+				appointment_profile = candidate
+				break
+	if not appointment_profile.is_empty():
+		available_profiles = [appointment_profile]
 	if available_profiles.is_empty():
 		push_error("Nao ha clientes unicos restantes para este dia.")
 		return
@@ -419,6 +437,9 @@ func _on_customer_ready(index: int, total: int) -> void:
 	for book in BookCatalog.books_for_preferences(profile.get("preference_tags", [])):
 		if district_book_ids.has(str(book.get("id", ""))):
 			matching_books.append(book)
+	var pickup: Dictionary = world.restoration_jobs.pickup_for_customer(str(profile.id), day_manager.day)
+	if not pickup.is_empty():
+		matching_books = [BookCatalog.get_book(str(pickup.book_id))]
 	if matching_books.is_empty():
 		push_error("O perfil %s nao possui livros compativeis." % str(profile.get("id", profile.get("name", "?"))))
 		return
@@ -428,9 +449,15 @@ func _on_customer_ready(index: int, total: int) -> void:
 	customer.configure(profile, matching_books.pick_random(), reputation, {
 		"memory": history, "story": world.story_text(customer_id),
 		"patience_bonus": world.patience_bonus(), "recommendation_bonus": world.recommendation_bonus(),
-		"negotiation_bonus": world.negotiation_bonus()
+		"negotiation_bonus": world.negotiation_bonus(), "restoration_pickup": pickup
 	})
 	world.record_visit(customer_id, day_manager.day)
+	if not pickup.is_empty():
+		world.restoration_jobs.mark_pickup_visit(str(pickup.id), day_manager.day)
+		_notify("RETIRADA AGENDADA", "%s chegou para buscar %s. Entregue no ATELIÊ → ENCOMENDAS DE RESTAURO." % [str(profile.name), str(BookCatalog.get_book(str(pickup.book_id)).title)], "info")
+	var repair: Dictionary = world.offer_restoration(profile, matching_books[0], day_manager.day) if pickup.is_empty() else {}
+	if not repair.is_empty():
+		_notify("LIVRO PARA RESTAURAR", "%s trouxe %s. Consulte a proposta no ATELIÊ → ENCOMENDAS DE RESTAURO. Prazo: dia %d." % [str(profile.name), str(BookCatalog.get_book(str(repair.book_id)).title), int(repair.due_day)], "info")
 	var mood_type := str(profile.get("mood_type", "indeciso"))
 	customer_time_limit = customer.patience_seconds()
 	customer_time_left = customer_time_limit
@@ -655,6 +682,9 @@ func _reserve_customer_book(screen: InventoryScreen) -> void:
 func _handle_stock_action(book_id: String, condition: String, action: String, screen: InventoryScreen) -> void:
 	if active_overlay != screen or not store_is_open or not customer.visible or inventory.get_condition_quantity(book_id, condition) <= 0:
 		return
+	if customer.request_mode == "restauro":
+		_notify("RETIRADA DE RESTAURO", "Este leitor veio buscar o próprio livro. Entregue no ATELIÊ → ENCOMENDAS DE RESTAURO.", "info")
+		return
 	if not _can_use_stock(book_id, condition):
 		return
 	var book := BookCatalog.get_book(book_id)
@@ -675,6 +705,8 @@ func _complete_stock_action(book: Dictionary, result: Dictionary, screen: Contro
 	if bool(result.get("accepted", false)) and not _can_use_stock(book_id, condition):
 		customer.served = false
 		return
+	if is_instance_valid(customer.expression_driver):
+		customer.expression_driver.react(bool(result.get("accepted", false)), bool(result.get("completed", false)))
 	var reputation_delta: int = int(result.get("reputation", 0))
 	if not bool(result.get("accepted", false)) and bool(result.get("counts_as_error", true)):
 		progression.record_error()
@@ -1053,6 +1085,8 @@ func _open_workshop() -> void:
 	var restore_pause: bool = game_menu.pause_enabled
 	active_overlay = screen
 	$UI.add_child(screen)
+	screen.visiting_customer_id = _restoration_customer_present()
+	screen.can_schedule_today = store_is_open
 	screen.setup(world, inventory, money, day_manager.day, customer_profiles, atmosphere.daylight.color)
 	workshop_button.hide()
 	game_menu.set_pause_enabled(false)
@@ -1084,6 +1118,59 @@ func _open_workshop() -> void:
 		_save_checkpoint(true)
 		screen.restoration_finished(true)
 	)
+	screen.contract_action_requested.connect(func(id: String, action: String) -> void:
+		if active_overlay != screen:
+			return
+		var changed := false
+		match action:
+			"accept": changed = world.restoration_jobs.accept(id, day_manager.day)
+			"decline": changed = world.restoration_jobs.decline(id, day_manager.day)
+			"collect":
+				var reward: Dictionary = world.restoration_jobs.collect(id, day_manager.day, _restoration_customer_present())
+				if not reward.is_empty():
+					money += int(reward.money)
+					reputation += int(reward.reputation)
+					progression.record_reputation(reputation)
+					changed = true
+					_notify("RESTAURAÇÃO ENTREGUE", "%s agradece: +%d moedas e +%d de reputação." % [str(reward.customer_name), int(reward.money), int(reward.reputation)], "success")
+					customer.served = true
+					day_customers_served += 1
+					_depart_customer()
+					day_manager.customer_completed()
+		if changed:
+			_update_status()
+			screen.visiting_customer_id = _restoration_customer_present()
+			screen.refresh(money, day_manager.day)
+			_save_checkpoint(true)
+		else:
+			screen.orders_panel.status_label.text = "Confira o prazo, as duas vagas e o agendamento. A entrega exige o titular presente na loja a partir do dia agendado."
+	)
+	screen.contract_schedule_requested.connect(func(id: String, pickup_day: int) -> void:
+		if active_overlay != screen or (pickup_day == day_manager.day and not store_is_open):
+			return
+		if not world.restoration_jobs.schedule_pickup(id, day_manager.day, pickup_day):
+			return
+		var job: Dictionary = world.restoration_jobs.get_job(id)
+		if pickup_day == day_manager.day and _restoration_customer_present() == str(job.customer_id):
+			world.restoration_jobs.mark_pickup_visit(id, day_manager.day)
+		_ensure_restoration_pickups()
+		_notify("ENTREGA AGENDADA", "%s virá buscar o livro no dia %d. O pagamento será recebido na entrega presencial." % [str(job.customer_name), pickup_day], "info")
+		screen.refresh(money, day_manager.day)
+		_save_checkpoint(true)
+	)
+	screen.contract_completed_requested.connect(func(id: String) -> void:
+		if active_overlay != screen or not screen.can_finish_contract(id):
+			return
+		var cost: int = world.finish_restoration_job(id, day_manager.day, money, int(screen.restoration_bench.restoration_cost))
+		screen.restoration_finished(cost >= 0)
+		if cost < 0:
+			return
+		money -= cost
+		screen.restoration_bench._status.text = "Livro do cliente restaurado. Materiais: %d moedas. Volte às encomendas para agendar a entrega; o pagamento exige a presença do titular na loja." % cost
+		_update_status()
+		screen.refresh(money, day_manager.day)
+		_save_checkpoint(true)
+	)
 	screen.theme_requested.connect(func(theme: String) -> void:
 		if active_overlay != screen or not world.set_display_theme(theme):
 			return
@@ -1101,7 +1188,29 @@ func _open_workshop() -> void:
 		_update_status()
 	)
 
+func _restoration_customer_present() -> String:
+	if store_is_open and is_instance_valid(customer) and customer.visible and not customer.served:
+		return str(customer.profile_data.get("id", ""))
+	return ""
+
+func _ensure_restoration_pickups() -> void:
+	if not store_is_open:
+		return
+	var needed := 0
+	for pickup in world.restoration_jobs.pickups_for_day(day_manager.day):
+		if str(pickup.customer_id) != _restoration_customer_present():
+			needed += 1
+	var current := 0 if _restoration_customer_present().is_empty() else 1
+	day_manager.customers_today = maxi(day_manager.customers_today, day_manager.served_today + current + needed)
+	if needed > 0 and current == 0 and not day_manager.waiting_for_next:
+		day_manager.waiting_for_end_notice = false
+		day_manager.waiting_for_next = true
+		day_manager.waiting_seconds = DayManager.MIN_WAIT_SECONDS
+
 func _can_use_stock(book_id: String, condition: String) -> bool:
+	if is_instance_valid(customer) and customer.request_mode == "restauro" and not customer.served:
+		_notify("RETIRADA DE RESTAURO", "O leitor veio buscar o próprio livro. Faça a entrega nas encomendas do ateliê.", "info")
+		return false
 	var customer_id := str(customer.profile_data.get("id", "")) if is_instance_valid(customer) else ""
 	if world.available_for_customer(inventory, book_id, condition, customer_id) > 0:
 		return true
@@ -1126,6 +1235,10 @@ func _begin_day() -> void:
 	sale_feedback.reset_day()
 	ambient_service_seconds = 0.0
 	atmosphere.reset_day()
+	atmosphere.weather.configure_day(day_manager.day)
+	var expired: int = world.restoration_jobs.expire(day_manager.day)
+	if expired > 0:
+		_notify("PRAZO DE RESTAURO ENCERRADO", "%d encomenda(s) foram canceladas. Consulte as propostas atuais no ateliê." % expired, "warning")
 	game_menu.set_pause_enabled(true)
 	customer_ids_seen_today.clear()
 	supplier_markets.clear()
@@ -1162,6 +1275,7 @@ func _continue_game() -> void:
 		if data.progression.has(field):
 			progression.set(field, data.progression[field])
 	day_manager.day = int(data.day)
+	atmosphere.weather.configure_day(day_manager.day)
 	money = int(data.money)
 	reputation = int(data.get("reputation", 0))
 	current_district_id = str(data.get("district", "centro"))
@@ -1328,6 +1442,8 @@ func _open_negotiation(book_id: String, condition: String, inventory_screen: Inv
 			return
 		var result: Dictionary = customer.negotiate(book, price)
 		if result.has("counter_price"):
+			if is_instance_valid(customer.expression_driver):
+				customer.expression_driver.react(false)
 			screen.show_counter(result)
 			return
 		_complete_stock_action(book, result, screen)

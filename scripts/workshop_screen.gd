@@ -4,6 +4,9 @@ signal closed
 signal purchase_requested(upgrade_id: String)
 signal restoration_requested(book_id: String)
 signal theme_requested(theme: String)
+signal contract_action_requested(id: String, action: String)
+signal contract_completed_requested(id: String)
+signal contract_schedule_requested(id: String, pickup_day: int)
 
 const Art = preload("res://scripts/hud_art.gd")
 const Paper = preload("res://scripts/inventory_paper.gd")
@@ -12,6 +15,7 @@ const RestorationBench = preload("res://scripts/restoration_bench.gd")
 const RoomSign = preload("res://scripts/workshop_sign.gd")
 const ROOM: Texture2D = preload("res://IMG/workshop/atelier_room_warm.png")
 const World = preload("res://scripts/shop_world.gd")
+const Diagnosis = preload("res://scripts/restoration_diagnosis.gd")
 const DESIGN_SIZE := Vector2(1280, 720)
 const INK := Color("302014")
 const MUTED := Color("6b5037")
@@ -112,6 +116,11 @@ var action_status: Label
 var reservation_scroll: ScrollContainer
 var reservation_list: VBoxContainer
 var restoration_bench: Control
+var orders_panel: Control
+var orders_button: Button
+var visiting_customer_id := ""
+var can_schedule_today := true
+var restoration_contract_id := ""
 var _closing := false
 
 func _ready() -> void:
@@ -160,7 +169,22 @@ func _ready() -> void:
 	back_button.add_theme_font_size_override("font_size", 17)
 	back_button.pressed.connect(_close)
 	_place(back_button, Rect2(21, 660, 264, 43), room)
+	orders_button = _orders_sign_button()
+	orders_button.name = "RestorationOrdersButton"
+	orders_button.pressed.connect(show_restoration_orders)
+	_place(orders_button, Rect2(865, 660, 389, 43), room)
 	_build_detail_panel()
+	orders_panel = preload("res://scripts/restoration_orders_panel.gd").new()
+	room.add_child(orders_panel)
+	orders_panel.hide()
+	orders_panel.closed.connect(show_room)
+	orders_panel.action_requested.connect(func(id: String, action: String) -> void:
+		if action == "work":
+			_open_contract_bench(id)
+		else:
+			contract_action_requested.emit(id, action)
+	)
+	orders_panel.pickup_scheduled.connect(func(id: String, pickup_day: int) -> void: contract_schedule_requested.emit(id, pickup_day))
 	show_room()
 
 func _build_detail_panel() -> void:
@@ -288,6 +312,9 @@ func refresh(value_funds: int, value_day: int) -> void:
 	funds = value_funds
 	day = value_day
 	wallet_label.text = str(funds)
+	orders_button.text = "ENCOMENDAS DE RESTAURO · %d" % world.restoration_jobs.pending().size()
+	if orders_panel.visible:
+		orders_panel.refresh(world, day, funds, visiting_customer_id, can_schedule_today)
 	_refresh_actions()
 
 func show_item(index: int) -> void:
@@ -306,6 +333,8 @@ func show_item(index: int) -> void:
 
 func show_room() -> void:
 	detail_layer.hide()
+	if is_instance_valid(orders_panel):
+		orders_panel.hide()
 	selected_item = -1
 	for hotspot in hotspots:
 		hotspot.release_focus()
@@ -404,11 +433,12 @@ func _refresh_restoration_quote(rebuild_picker := true) -> void:
 	action_button.tooltip_text = "Abrir é gratuito. Só o conserto é cobrado, quando for concluído."
 	action_button.disabled = used_today or not has_book or quote < 0
 	if used_today:
-		action_status.text = "Restauração de hoje concluída. Volte no próximo dia."
+		action_status.text = "Restauro do estoque concluído hoje. O limite de encomendas é separado."
 	elif not has_book:
 		action_status.text = "Não há livros danificados disponíveis no estoque."
 	else:
 		action_status.text = "Conserto: %s · %d moedas ao concluir." % [str(BookCatalog.get_condition(restoration_condition).label), quote]
+		benefit.text = "Diagnóstico: " + Diagnosis.summary(Diagnosis.for_book(book_id, day))
 		if funds < quote:
 			var missing := quote - funds
 			action_status.text += "\nFalta 1 moeda para concluir." if missing == 1 else "\nFaltam %d moedas para concluir." % missing
@@ -456,8 +486,9 @@ func _open_restoration_bench(book_id: String) -> void:
 		return
 	restoration_bench = RestorationBench.new()
 	restoration_bench.name = "RestorationBench"
+	restoration_contract_id = ""
 	room.add_child(restoration_bench)
-	restoration_bench.setup(book, restoration_condition, funds)
+	restoration_bench.setup(book, restoration_condition, funds, Diagnosis.for_book(book_id, day))
 	detail_layer.hide()
 	restoration_bench.completed.connect(func(completed_book: String) -> void:
 		if can_finish_restoration(completed_book):
@@ -471,7 +502,42 @@ func _open_restoration_bench(book_id: String) -> void:
 	)
 
 func can_finish_restoration(book_id: String) -> bool:
-	return is_instance_valid(restoration_bench) and restoration_bench.can_submit(book_id)
+	return restoration_contract_id.is_empty() and is_instance_valid(restoration_bench) and restoration_bench.can_submit(book_id)
+
+func show_restoration_orders() -> void:
+	if is_instance_valid(restoration_bench):
+		return
+	detail_layer.hide()
+	orders_panel.refresh(world, day, funds, visiting_customer_id, can_schedule_today)
+	orders_panel.show()
+
+func _open_contract_bench(id: String) -> void:
+	if is_instance_valid(restoration_bench) or not world.upgrades.has("restoration_table") or world.last_contract_restoration_day == day or not world.restoration_jobs.can_work(id, day):
+		return
+	var job: Dictionary = world.restoration_jobs.get_job(id)
+	restoration_contract_id = id
+	restoration_bench = RestorationBench.new()
+	restoration_bench.name = "RestorationBench"
+	room.add_child(restoration_bench)
+	restoration_bench.setup(BookCatalog.get_book(str(job.book_id)), str(job.condition), funds, Diagnosis.profile(str(job.diagnosis)))
+	restoration_bench.restoration_cost = int(job.cost)
+	restoration_bench._materials_label.text = "Materiais: %d moedas ao concluir" % int(job.cost)
+	orders_panel.hide()
+	restoration_bench.completed.connect(func(_book: String) -> void:
+		if can_finish_contract(id):
+			contract_completed_requested.emit(id)
+	)
+	restoration_bench.closed.connect(func() -> void:
+		var closing := restoration_bench
+		restoration_bench = null
+		restoration_contract_id = ""
+		closing.queue_free()
+		show_restoration_orders()
+	)
+
+func can_finish_contract(id: String) -> bool:
+	var job: Dictionary = world.restoration_jobs.get_job(id)
+	return not job.is_empty() and restoration_contract_id == id and is_instance_valid(restoration_bench) and restoration_bench.target_condition == str(job.condition) and restoration_bench.can_submit(str(job.book_id))
 
 func restoration_target(book_id: String) -> String:
 	return restoration_bench.target_condition if can_finish_restoration(book_id) else ""
@@ -498,7 +564,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if is_instance_valid(restoration_bench):
 		return
 	if is_visible_in_tree() and event.is_action_pressed("ui_cancel") and not event.is_echo():
-		if detail_layer.visible:
+		if detail_layer.visible or orders_panel.visible:
 			show_room()
 		else:
 			_close()
@@ -548,4 +614,35 @@ func _paper_button(text: String, font_size: int) -> Button:
 	focus.set_border_width_all(1)
 	button.add_theme_stylebox_override("focus", focus)
 	button.add_child(Paper.ButtonBacking.new())
+	return button
+
+func _orders_sign_button() -> Button:
+	var button := Button.new()
+	button.text = "ENCOMENDAS DE RESTAURO"
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_font_override("font", Art.handwriting(false))
+	button.add_theme_font_size_override("font_size", 18)
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	for state in ["font_color", "font_pressed_color", "font_focus_color"]:
+		button.add_theme_color_override(state, Color("e0c18b"))
+	button.add_theme_color_override("font_hover_color", Color("f6dda9"))
+	button.add_theme_color_override("font_hover_pressed_color", Color("f6dda9"))
+	button.add_theme_color_override("font_shadow_color", Color(0.07, 0.04, 0.02, 0.9))
+	button.add_theme_constant_override("shadow_offset_x", 1)
+	button.add_theme_constant_override("shadow_offset_y", 1)
+	var backing := RoomSign.new()
+	backing.name = "WoodenSign"
+	backing.compact = true
+	backing.show_behind_parent = true
+	backing.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	button.add_child(backing)
+	var refresh_sign := func() -> void:
+		backing.self_modulate = Color(1.15, 1.12, 1.06) if button.is_hovered() or button.has_focus() else Color.WHITE
+	button.mouse_entered.connect(refresh_sign)
+	button.mouse_exited.connect(refresh_sign)
+	button.focus_entered.connect(refresh_sign)
+	button.focus_exited.connect(refresh_sign)
+	button.button_down.connect(func() -> void: backing.self_modulate = Color(0.85, 0.82, 0.77))
+	button.button_up.connect(refresh_sign)
 	return button

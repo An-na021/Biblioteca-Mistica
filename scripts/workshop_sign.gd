@@ -3,6 +3,7 @@ extends Control
 const Art = preload("res://scripts/hud_art.gd")
 const BRASS := Color("a18554")
 var wallet := false
+var compact := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -38,6 +39,8 @@ func _draw() -> void:
 		draw_circle(point, 2.2, BRASS.darkened(0.2), true, -1, true)
 		draw_arc(point, 1.8, PI, TAU, 12, Color("c0a16a"), 0.6, true)
 		draw_line(point + Vector2(-1, 1), point + Vector2(1, -1), Color("39281a"), 0.7, true)
+	if compact:
+		return
 	if wallet:
 		_draw_coins(Vector2(42, size.y * 0.5))
 	else:

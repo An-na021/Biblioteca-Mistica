@@ -27,6 +27,8 @@ static func stroke(tree: SceneTree, bench: Control, point: Vector2) -> void:
 	await button(tree, bench, point, false)
 
 static func clean(tree: SceneTree, bench: Control) -> void:
+	if bench.stage != bench.Stage.CLEAN:
+		return
 	await click(tree, bench.tool_buttons[0])
 	for point in bench.CLEAN_SPOTS:
 		await clean_area(tree, bench, point)
@@ -43,6 +45,8 @@ static func clean_area(tree: SceneTree, bench: Control, center: Vector2) -> void
 		await button(tree, bench, center + Vector2(47, row), false)
 
 static func glue(tree: SceneTree, bench: Control) -> void:
+	if bench.stage != bench.Stage.GLUE:
+		return
 	await click(tree, bench.tool_buttons[1])
 	for index in range(bench.PATCH_TARGETS.size()):
 		if bench.glued[index] < 1.0:
@@ -90,6 +94,8 @@ static func smooth_scrap(tree: SceneTree, bench: Control, index: int) -> void:
 	await button(tree, bench, center, false)
 
 static func patch(tree: SceneTree, bench: Control) -> void:
+	if bench.stage != bench.Stage.PATCH:
+		return
 	for index in range(3):
 		if not bench.materials.laid[index]:
 			await drag_scrap(tree, bench, index, bench.PATCH_TARGETS[index], false)
@@ -98,6 +104,8 @@ static func patch(tree: SceneTree, bench: Control) -> void:
 			await smooth_scrap(tree, bench, index)
 
 static func sew(tree: SceneTree, bench: Control, start := 0, end := 8) -> void:
+	if bench.stage != bench.Stage.SEW:
+		return
 	await click(tree, bench.tool_buttons[3])
 	for index in range(start, mini(end, bench.SEW_HOLES.size())):
 		await begin_stitch(tree, bench, index)
@@ -138,6 +146,8 @@ static func turn_press(tree: SceneTree, bench: Control, turns: float) -> void:
 		await tree.create_timer(0.4).timeout
 
 static func press(tree: SceneTree, bench: Control) -> void:
+	if bench.stage != bench.Stage.PRESS:
+		return
 	await click(tree, bench.tool_buttons[4])
 	await turn_press(tree, bench, bench.Press.MAX_TURNS - bench.press.turns)
 	await tree.create_timer(bench.Press.DRY_SECONDS + 0.4).timeout

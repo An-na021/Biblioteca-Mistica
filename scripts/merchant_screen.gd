@@ -179,7 +179,8 @@ func _book_row(book_id: String, offer: Dictionary) -> CatalogueEntry:
 	row.name = "Book_" + book_id
 	row.set_meta("book_id", book_id)
 	row.reserved = not orders.is_empty()
-	_place(_make_book_cover(item), Rect2(6, 12, 66, 103), row)
+	var cover := _make_book_cover(item)
+	_place(cover, Rect2(6, 12, 66, 103), row)
 	var title := _make_label(str(item.title), 23, INK)
 	title.clip_text = true
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -242,6 +243,7 @@ func _book_row(book_id: String, offer: Dictionary) -> CatalogueEntry:
 	_place(buy, Rect2(305, 40, 158, 31), row)
 	var update_purchase := func() -> void:
 		var selected := str(picker.get_item_metadata(picker.selected))
+		preload("res://scripts/book_cover_art.gd").apply(cover, item, selected)
 		_selected_conditions[book_id] = selected
 		var selected_offer: Dictionary = condition_stock[selected]
 		var price := int(selected_offer.price)
@@ -372,15 +374,10 @@ func _make_label(text: String, font_size: int, color: Color, heading := false, i
 	return label
 
 
-func _make_book_cover(book: Dictionary) -> Control:
-	var texture: Texture2D = book.get("cover_texture")
-	if texture != null:
-		var image := TextureRect.new()
-		image.texture = texture
-		image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		return image
-
-	var color_cover := ColorRect.new()
-	color_cover.color = book.cover_color
-	return color_cover
+func _make_book_cover(book: Dictionary) -> TextureRect:
+	var image := TextureRect.new()
+	image.name = "BookCover"
+	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	preload("res://scripts/book_cover_art.gd").apply(image, book, "novo")
+	return image

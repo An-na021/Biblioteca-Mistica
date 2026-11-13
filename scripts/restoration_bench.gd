@@ -16,6 +16,7 @@ const Materials = preload("res://scripts/restoration_materials.gd")
 const BrushDip = preload("res://scripts/restoration_brush_dip.gd")
 const PressureRoller = preload("res://scripts/restoration_pressure_roller.gd")
 const World = preload("res://scripts/shop_world.gd")
+const Diagnosis = preload("res://scripts/restoration_diagnosis.gd")
 const GLUE_POT_RECT := Rect2(1038, 137, 135, 135)
 const GLUE_DIP_RECT := Rect2(1070.5, 169.5, 70, 70)
 const BRUSH_REST_TIP := Vector2(1194, 245)
@@ -72,6 +73,10 @@ var _brush_target_angle := 0.55
 var _brush_contact := 0.0
 var _elapsed := 0.0
 var _cover: Texture2D
+var _cover_book: Dictionary = {}
+var diagnosis: Dictionary = Diagnosis.profile("complete")
+var work_stages: Array[int] = [0, 1, 2, 3, 4]
+var tool_audio: Node
 var _surface: Control
 var _book_visual: TextureRect
 var _instruction: Label
@@ -89,6 +94,10 @@ var _tool_plates: Array[Control] = []
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	tool_audio = preload("res://scripts/game_audio.gd").new()
+	tool_audio.name = "ToolAudio"
+	tool_audio.allow_while_paused = true
+	add_child(tool_audio)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var background := TextureRect.new()
@@ -163,20 +172,30 @@ func _ready() -> void:
 	_put(back_button, Rect2(22, 655, 203, 45))
 	_refresh()
 
-func setup(book: Dictionary, value_condition := "usado", funds := -1) -> void:
+func setup(book: Dictionary, value_condition := "usado", funds := -1, value_diagnosis: Dictionary = {}) -> void:
 	book_id = str(book.get("id", ""))
 	target_condition = value_condition if value_condition in World.RESTORATION_TARGETS else "usado"
 	restoration_cost = World.restoration_cost(book_id, target_condition)
-	_cover = book.get("cover_texture") as Texture2D
+	_cover_book = book.duplicate()
+	_cover = preload("res://scripts/book_cover_art.gd").texture_for(_cover_book, "danificado")
+	diagnosis = Diagnosis.profile(str(value_diagnosis.get("id", "complete")))
+	work_stages.assign(diagnosis.stages)
+	stage = work_stages[0]
+	selected_tool = stage
+	if Stage.CLEAN not in work_stages:
+		for index in range(cleaned.size()):
+			cleaned[index] = 1.0
+			for mote: Dictionary in materials.dust[index]:
+				mote.health = 0.0
 	get_node("BookTitle").text = str(book.get("title", "Livro")) + " · Danificado → " + str(BookCatalog.get_condition(target_condition).label)
 	_materials_label.text = "Conserto: %d moedas ao concluir" % restoration_cost
-	_status.text = "Abrir a bancada é gratuito. Conserto %s: %d moedas, cobradas somente ao concluir." % [str(BookCatalog.get_condition(target_condition).label), restoration_cost]
+	_status.text = "Diagnóstico: " + Diagnosis.summary(diagnosis)
 	if funds >= 0 and funds < restoration_cost:
-		var missing := restoration_cost - funds
-		_status.text += " Falta 1 moeda para finalizar." if missing == 1 else " Faltam %d moedas para finalizar." % missing
+		_status.text += " Faltam %d moedas para concluir." % (restoration_cost - funds)
+	_refresh()
 
 func select_tool(index: int) -> void:
-	if submitted:
+	if submitted or index not in work_stages:
 		return
 	selected_tool = clampi(index, 0, TOOLS.size() - 1)
 	if brush_dip.active:
@@ -190,16 +209,27 @@ func select_tool(index: int) -> void:
 
 func _refresh() -> void:
 	var names := ["LIMPEZA", "APLICAR COLA", "COLAR PAPÉIS", "COSTURA", "PRENSAGEM", "FINALIZAÇÃO"]
-	_stage_label.text = "%d/5 · %s" % [mini(stage + 1, 5), names[stage]]
+	_stage_label.text = "%d/%d · %s" % [mini(work_stages.find(stage) + 1 if stage != Stage.DONE else work_stages.size(), work_stages.size()), work_stages.size(), names[stage]]
 	_instruction.text = INSTRUCTIONS[stage]
-	_tray_label.text = "LIVRO NA PRENSA" if stage >= Stage.PRESS else "PAPÉIS DE REPARO"
+	_tray_label.text = "LIVRO RESTAURADO" if stage == Stage.DONE else "LIVRO NA PRENSA" if stage == Stage.PRESS else "PAPÉIS DE REPARO" if Stage.PATCH in work_stages else "DIAGNÓSTICO"
 	_tray_caption.visible = stage >= Stage.PRESS
+	if Stage.PATCH not in work_stages and stage < Stage.PRESS:
+		_tray_caption.text = Diagnosis.summary(diagnosis)
+		_tray_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_tray_caption.position = Vector2(1004, 335)
+		_tray_caption.size = Vector2(220, 205)
+		_tray_caption.visible = true
+	elif stage >= Stage.PRESS:
+		_tray_caption.text = "Exemplar escolhido"
+		_tray_caption.position = Vector2(1000, 570)
+		_tray_caption.size = Vector2(230, 27)
 	for index in range(_paper_numbers.size()):
-		_paper_numbers[index].visible = stage <= Stage.PATCH and not materials.laid[index]
+		_paper_numbers[index].visible = Stage.PATCH in work_stages and stage <= Stage.PATCH and not materials.laid[index]
 	for index in range(tool_buttons.size()):
 		tool_buttons[index].text = TOOLS[index]
 		_tool_plates[index].set("selected", index == selected_tool)
-		tool_buttons[index].disabled = submitted
+		tool_buttons[index].disabled = submitted or index not in work_stages
+		tool_buttons[index].tooltip_text = "Não necessário neste diagnóstico." if index not in work_stages else ""
 	match stage:
 		Stage.CLEAN:
 			_progress_label.text = "Áreas limpas: %d/3\nLimpeza: %d%%" % [cleaned.filter(func(value: float) -> bool: return value >= 1.0).size(), materials.clean_percent()]
@@ -210,7 +240,7 @@ func _refresh() -> void:
 			tool_buttons[2].text = "ROLETE" if roller_ready else "PAPEL"
 			_progress_label.text = "Remendos: %d/3" % materials.laid.count(true)
 			if roller_ready:
-				_stage_label.text = "3/5 · ASSENTAR PAPÉIS"
+				_stage_label.text = "%d/%d · ASSENTAR PAPÉIS" % [work_stages.find(stage) + 1, work_stages.size()]
 				_instruction.text = "Use o rolete sobre os remendos. Acompanhe o assentamento na lateral."
 				_progress_label.text += "\nAssentados: %d/3" % patched.count(true)
 			if _smoothing_index >= 0:
@@ -225,12 +255,18 @@ func _refresh() -> void:
 			_instruction.text = press.instruction()
 			_status.text = press.instruction()
 		Stage.DONE:
-			_progress_label.text = "Limpeza ✓\nColagem ✓\nCostura ✓\nPrensagem ✓"
+			var done := PackedStringArray()
+			for step in work_stages:
+				done.append(str(names[step]).capitalize() + " ✓")
+			_progress_label.text = "\n".join(done)
 	_progress_note.size.y = minf(103.0, 22.0 * (_progress_label.text.count("\n") + 1) + 17.0)
 	_surface.queue_redraw()
 
 func _next_stage() -> void:
-	stage += 1
+	if submitted:
+		return
+	var next := work_stages.find(stage) + 1
+	stage = work_stages[next] if next < work_stages.size() else Stage.DONE
 	glue_amount = 0.0
 	brush_dip.cancel()
 	selected_tool = [0, 1, 2, 3, 4, 4][stage]
@@ -241,8 +277,13 @@ func _next_stage() -> void:
 	if stage == Stage.SEW:
 		sewing.move(_pointer)
 	_status.text = "Etapa concluída. " + INSTRUCTIONS[stage]
-	_book_visual.visible = stage < Stage.PRESS
+	_book_visual.visible = not (Stage.PRESS in work_stages and stage >= Stage.PRESS)
+	tool_audio.silence()
+	if stage == Stage.DONE:
+		submitted = true
 	_refresh()
+	if submitted:
+		completed.emit(book_id)
 
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or submitted:
@@ -252,11 +293,17 @@ func _input(event: InputEvent) -> void:
 		_pointer = point
 		_pointer_known = true
 		if stage == Stage.SEW and selected_tool == 3:
+			var previous_pull := sewing.pull
 			sewing.move(point)
+			if sewing.pull > previous_pull:
+				tool_audio.engage("thread", minf(1, (sewing.pull - previous_pull) * 10))
 			_status.text = sewing.message
 			_refresh()
 		elif stage == Stage.PRESS and press.dragging:
+			var before := press.turns
 			press.drag(point - _last_point)
+			if not is_equal_approx(before, press.turns):
+				tool_audio.engage("press", minf(1, point.distance_to(_last_point) / 25))
 			_refresh()
 		elif _drag_index >= 0:
 			_drag_position = point - _drag_offset
@@ -332,13 +379,17 @@ func _work_stroke(point: Vector2) -> void:
 	if distance <= 0.001:
 		return
 	if stage == Stage.CLEAN and selected_tool == 0:
-		materials.clean_segment(_last_point, point)
+		if materials.clean_segment(_last_point, point):
+			tool_audio.engage("brush", distance / 35)
 		_brush_target_angle = 0.55 + clampf((point.x - _last_point.x) * 0.006, -0.18, 0.18)
-		_finish_cleaning_if_ready()
+		if _finish_cleaning_if_ready():
+			return
 	elif stage == Stage.GLUE and selected_tool == 1:
 		_brush_target_angle = 0.55 + clampf((point.x - _last_point.x) * 0.006, -0.18, 0.18)
 		var previous := glue_amount
 		glue_amount = materials.apply_glue(_last_point, point, glue_amount)
+		if glue_amount < previous:
+			tool_audio.engage("glue", distance / 35)
 		if _finish_glue_if_ready():
 			return
 		elif previous <= 0.0001:
@@ -347,6 +398,8 @@ func _work_stroke(point: Vector2) -> void:
 			_status.text = "Recarregue o pincel para preparar o próximo rasgo." if glue_amount == 0.0 else "Espalhe a cola pelas bordas ainda secas. A camada clara mostra onde o pincel passou."
 	elif stage == Stage.PATCH and selected_tool == 2:
 		_smoothing_index = _smoothing_target(point)
+		if _smoothing_index >= 0:
+			tool_audio.engage("roller", distance / 35)
 		if _smoothing_index >= 0 and materials.smooth(_smoothing_index, _last_point, point):
 			_finish_smoothing()
 	_refresh()
@@ -389,6 +442,7 @@ func _is_over_glue(point: Vector2) -> bool:
 
 func _begin_glue_dip() -> void:
 	brush_dip.begin(_pointer, GLUE_DIP_RECT.get_center(), _brush_angle)
+	tool_audio.one_shot("dip")
 	_status.text = "Molhando as cerdas na cola. Aguarde o pincel levantar."
 
 func _drop_scrap(point: Vector2) -> void:
@@ -397,6 +451,7 @@ func _drop_scrap(point: Vector2) -> void:
 	if point.distance_to(PATCH_TARGETS[index]) <= 22:
 		if glued[index] >= 1.0:
 			materials.lay(index)
+			tool_audio.one_shot("paper")
 			_status.text = "Os três papéis estão no lugar. Use o rolete por cerca de 5 segundos em cada remendo." if materials.papers_ready_for_roller() else "Remendo no lugar. Encaixe os papéis restantes para liberar o rolete."
 		else:
 			_status.text = "Passe COLA sobre esse rasgo antes de colocar o papel."
@@ -436,15 +491,13 @@ func _process(delta: float) -> void:
 			_next_stage()
 		else:
 			if sewing.phase != old_phase:
+				tool_audio.one_shot("needle" if sewing.phase == Sewing.Phase.PULLING else "thread")
 				_status.text = sewing.message
 			_refresh()
 	if stage == Stage.PRESS and not submitted:
 		press.advance(delta)
 		if press.phase == Press.Phase.FINISHED:
-			submitted = true
-			stage = Stage.DONE
-			_refresh()
-			completed.emit(book_id)
+			_next_stage()
 		else:
 			_refresh()
 	_surface.queue_redraw()
@@ -454,6 +507,9 @@ func can_submit(value_book_id: String) -> bool:
 
 func show_result(success: bool) -> void:
 	result_received = true
+	if success:
+		_cover = preload("res://scripts/book_cover_art.gd").texture_for(_cover_book, target_condition)
+		_surface.queue_redraw()
 	_instruction.text = "LIVRO RESTAURADO" if success else "NÃO FOI POSSÍVEL FINALIZAR"
 	_status.text = "Livro devolvido ao estoque como %s. Conserto: %d moedas. O próximo restauro estará disponível amanhã." % [str(BookCatalog.get_condition(target_condition).label), restoration_cost] if success else "Saldo insuficiente ou exemplar indisponível. Nenhuma moeda foi cobrada e nenhum livro foi alterado."
 	back_button.text = "VOLTAR À MESA"
@@ -472,8 +528,10 @@ func paint_work(painter: Control) -> void:
 		painter.draw_set_transform(GLUE_DIP_RECT.get_center())
 		painter.draw_arc(Vector2.ZERO, GLUE_DIP_RECT.size.x * 0.5, 0, TAU, 40, Color(1.0, 0.85, 0.45, 0.65 + sin(_elapsed * 4) * 0.2), 2, true)
 		painter.draw_set_transform(Vector2.ZERO)
-	if stage < Stage.PRESS:
-		materials.paint_holes(painter)
+	var show_press := Stage.PRESS in work_stages and stage >= Stage.PRESS
+	if not show_press:
+		if Stage.PATCH in work_stages:
+			materials.paint_holes(painter)
 		for index in range(PATCH_TARGETS.size()):
 			if materials.laid[index]:
 				materials.paint_paper(painter, index)
@@ -482,7 +540,9 @@ func paint_work(painter: Control) -> void:
 			sewing.paint(painter, _elapsed, selected_tool == 3)
 	else:
 		_paint_press(painter)
-	if stage <= Stage.PATCH:
+	if stage == Stage.DONE and not show_press and _cover != null:
+		painter.draw_texture_rect(_cover, Rect2(1030, 330, 166, 224), false)
+	if stage <= Stage.PATCH and Stage.PATCH in work_stages:
 		for index in range(SCRAP_HOMES.size()):
 			if not materials.laid[index] and index != _drag_index:
 				materials.paint_paper(painter, index)

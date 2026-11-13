@@ -337,7 +337,6 @@ func _make_book_row(book: Dictionary) -> Control:
 	cover.custom_minimum_size = Vector2(78, 118)
 	cover.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	cover.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	cover.tooltip_text = "Capa de " + str(book.get("title", "Livro"))
 	content.add_child(cover)
 
 	var details := VBoxContainer.new()
@@ -361,8 +360,9 @@ func _make_book_row(book: Dictionary) -> Control:
 	var condition_colors := {"novo": Color("b7bd8a"), "usado": Color("c9a76c"), "danificado": Color("c78365"), "raro": Color("c5b080")}
 	var price_summary := PackedStringArray()
 	var condition_group: ButtonGroup
-	var condition_selector := HFlowContainer.new()
+	var condition_selector: HFlowContainer
 	if has_active_customer:
+		condition_selector = HFlowContainer.new()
 		condition_group = ButtonGroup.new()
 		condition_group.allow_unpress = false
 		condition_selector.add_theme_constant_override("h_separation", 5)
@@ -389,6 +389,11 @@ func _make_book_row(book: Dictionary) -> Control:
 	if not has_active_customer:
 		var price_line := _make_label("Compra/venda: " + "  ·  ".join(price_summary), 10, TEXT_MUTED)
 		details.add_child(price_line)
+	else:
+		condition_group.pressed.connect(func(button: BaseButton) -> void:
+			preload("res://scripts/book_cover_art.gd").apply(cover, book, str(button.get_meta("condition", "novo")))
+		)
+		preload("res://scripts/book_cover_art.gd").apply(cover, book, _selected_condition(condition_group))
 
 	var description := _make_label(str(book.get("description", "")), 14, TEXT_PRIMARY)
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -567,15 +572,12 @@ func _style_button(button: Button, prominent: bool) -> void:
 	backing.wooden = prominent
 	button.add_child(backing)
 
-func _make_book_cover(book: Dictionary) -> Control:
-	var texture: Texture2D = book.get("cover_texture")
-	if texture != null:
-		var image := TextureRect.new()
-		image.texture = texture
-		image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		return image
-
-	var color_cover := ColorRect.new()
-	color_cover.color = book.cover_color
-	return color_cover
+func _make_book_cover(book: Dictionary) -> TextureRect:
+	var image := TextureRect.new()
+	image.name = "BookCover"
+	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	var conditions: Array = book.get("conditions", [])
+	var condition := str(conditions[0].get("condition", "novo")) if not conditions.is_empty() else "novo"
+	preload("res://scripts/book_cover_art.gd").apply(image, book, condition)
+	return image

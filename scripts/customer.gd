@@ -21,6 +21,7 @@ var display_bonus := 0.0
 var extra_patience := 0.0
 var negotiation_refusals := 0
 var offer_decisions: Dictionary = {}
+var expression_driver: Node
 @onready var portrait: Sprite2D = get_node_or_null("Portrait") as Sprite2D
 @onready var fallback_art: Array[CanvasItem] = [get_node_or_null("Body") as CanvasItem, get_node_or_null("Head") as CanvasItem, get_node_or_null("Hair") as CanvasItem, get_node_or_null("Collar") as CanvasItem]
 
@@ -74,6 +75,13 @@ func configure(profile: Dictionary, requested_book: Dictionary, current_reputati
 		request_text = "Espero que desta vez encontre o que procuro. " + request_text
 	elif reputation_band == "high":
 		request_text = "Ouvi boas recomendações desta livraria. " + request_text
+	var pickup: Dictionary = context.get("restoration_pickup", {})
+	if not pickup.is_empty():
+		request_mode = "restauro"
+		requested_book_id = str(pickup.book_id)
+		acceptable_book_ids.clear()
+		request_text = "Vim buscar meu livro restaurado: %s. Minha entrega está agendada para o dia %d. Consulte ATELIÊ → ENCOMENDAS DE RESTAURO." % [str(BookCatalog.get_book(requested_book_id).get("title", "Livro")), int(pickup.pickup_day)]
+		request_clue = {"type": "restauro", "text": request_text, "attribute": requested_book_id}
 	request_clue["text"] = request_text
 	profile_data["behavior_hint"] = behavior_hint()
 	profile_data["memory_text"] = str(context.get("story", "Primeira visita: vamos conhecer este leitor."))
@@ -96,7 +104,7 @@ func can_accept_book(book_id: String) -> bool:
 	return acceptable_book_ids.has(book_id)
 
 func can_reserve(inventory: Inventory) -> bool:
-	if served or requested_book_id.is_empty():
+	if served or requested_book_id.is_empty() or request_mode == "restauro":
 		return false
 	var condition := str(profile_data.get("preferred_condition", "novo"))
 	for book_id in acceptable_book_ids:
@@ -190,6 +198,8 @@ func _not_a_match_text() -> String:
 	return "Esse exemplar não corresponde à pista. " + request_text
 
 func _set_portrait(path: String) -> void:
+	if is_instance_valid(expression_driver):
+		expression_driver.reset_pose()
 	var portrait_texture: Texture2D = portrait.texture if portrait != null else null
 	if not path.is_empty():
 		portrait_texture = load(path) as Texture2D if ResourceLoader.exists(path) else null
@@ -200,6 +210,12 @@ func _set_portrait(path: String) -> void:
 	for piece in fallback_art:
 		if piece != null:
 			piece.visible = portrait_texture == null
+	if is_instance_valid(expression_driver):
+		expression_driver.queue_free()
+	expression_driver = preload("res://scripts/customer_expression.gd").new()
+	expression_driver.name = "Expression"
+	add_child(expression_driver)
+	expression_driver.setup(portrait, str(profile_data.get("id", "")), get_node_or_null("PortraitShadow") as Sprite2D)
 
 func _ready() -> void:
 	super()

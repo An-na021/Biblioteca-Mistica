@@ -1,0 +1,33 @@
+/* Estudo visual independente: nenhuma cena ou script do jogo é alterado. */
+:root{--ink:#382619;--muted:#715438;--line:#a7834c;--green:#503522}
+body{font-family:'Palatino Linotype','Book Antiqua',Georgia,serif}
+main{width:min(944px,100%)}
+.sheet{padding:30px 38px 25px;border:8px solid #543822;outline:1px solid #a48149;background:radial-gradient(ellipse at 0 0,#9a642948,transparent 35%),radial-gradient(ellipse at 100% 100%,#93582735,transparent 35%),radial-gradient(ellipse at 45% 35%,#fff4cf88,transparent 65%),repeating-linear-gradient(92deg,#724f2205 0px,#724f2205 1px,transparent 1px,transparent 3px),#ddc393;box-shadow:0 22px 70px #000b,0 0 0 3px #261b14,inset 0 0 35px #84552633}
+.sheet:before{inset:7px;border:1px solid #89632b;outline:1px solid #a37c3f66;outline-offset:4px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70' fill='none' stroke='%23845e2d' stroke-width='1.2'%3E%3Cpath d='M3 65V3H65M9 55V9H55M15 47V15H47M10 38C28 38 9 8 35 10C52 12 39 34 27 25C20 20 30 12 34 17M4 59C31 61 20 35 40 32C50 31 54 43 45 46C37 48 34 39 40 37M18 57C19 42 31 47 32 57C31 64 20 64 18 57Z'/%3E%3Cpath d='M54 7L58 12L54 17L50 12ZM8 49L12 53L8 57L4 53Z' fill='%23845e2d'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70' fill='none' stroke='%23845e2d' stroke-width='1.2'%3E%3Cg transform='translate(70 70) rotate(180)'%3E%3Cpath d='M3 65V3H65M9 55V9H55M15 47V15H47M10 38C28 38 9 8 35 10C52 12 39 34 27 25C20 20 30 12 34 17M4 59C31 61 20 35 40 32C50 31 54 43 45 46C37 48 34 39 40 37M18 57C19 42 31 47 32 57C31 64 20 64 18 57Z'/%3E%3C/g%3E%3C/svg%3E");background-position:top left,bottom right;background-size:65px;background-repeat:no-repeat}
+header{gap:20px;margin-bottom:22px}
+.emblem{width:57px;height:66px;color:#e2c58b;background:linear-gradient(100deg,#6b2922,#913e2f 45%,#68271f);border:1px solid #ae8650;outline-color:#966e35;outline-offset:3px;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);box-shadow:inset 0 0 0 4px #53251f}
+.emblem svg{width:35px;margin-top:-7px;stroke:#e0bf7c}
+.eyebrow{font:small-caps 13px 'Palatino Linotype',Georgia,serif;letter-spacing:3px;color:#7b3b29}
+h1{font-family:'Palatino Linotype',Georgia,serif;font-size:31px;font-variant:small-caps;letter-spacing:-.5px;text-shadow:0 1px #fff2ce}
+header p{font-style:italic;font-size:14px;color:#745a3e}
+.day{padding:8px 0 0;border:3px double #b37358;width:65px;height:65px;flex-shrink:0;position:relative;border-radius:50%;background:radial-gradient(circle at 38% 30%,#a55340,#793325 70%);color:#f2d6a0;box-shadow:0 2px 3px #502b2a55,0 0 0 3px #823c2c;transform:rotate(5deg)}
+.day span{font:9px Georgia,serif;letter-spacing:2px}.day strong{font:30px/1.05 Georgia,serif;text-shadow:0 1px #3e1f19}
+.summary{font-family:'Palatino Linotype',Georgia,serif;font-size:13px;border-top:3px double #a1804d;border-bottom:3px double #a1804d;padding:9px 0;color:#6e5134;margin-bottom:18px}
+.dot{border-radius:0;transform:rotate(45deg);background:#864b30;width:5px;height:5px}
+.orders{gap:17px}
+.card{border:1px solid #a27a44;background:radial-gradient(ellipse at 60% 20%,#fbebc966,transparent 90%),#ead3a344;box-shadow:0 2px 4px #79572b18,inset 0 0 16px #8b62320c;padding:17px 21px 14px}
+.card:before{top:8px;bottom:8px;width:4px;background:repeating-linear-gradient(0deg,#8a432b 0,#8a432b 8px,#c49a56 8px,#c49a56 10px)}
+.card:after{content:'◆';position:absolute;right:-5px;bottom:-7px;color:#99733f;font-size:12px;background:#dec697;line-height:12px}
+.customer{color:#6f3628;font-variant:small-caps;font-size:16px;letter-spacing:.3px}.number{font:12px Georgia,serif;color:#936c3a;border-right:1px solid #af8d55;padding-right:10px}
+.due{font:italic 12px Georgia,serif;border:0;border-bottom:1px solid #a6864c;padding:5px 1px;background:transparent;color:#795a31}.due.urgent{border-color:#a3694b;color:#893c29;background:transparent}
+h2{font-family:'Palatino Linotype',Georgia,serif;font-size:25px;margin:8px 0 10px}
+h2:first-letter{font-size:34px;color:#873e2a;font-weight:bold;text-shadow:1px 1px #d7b267}
+.condition,.condition.rare{font:small-caps 11px Georgia,serif;letter-spacing:.6px;border:1px solid #ae8a50;background:#dec18b44;color:#6b512d;padding:3px 7px}
+.condition.rare{border:3px double #9a793d;padding:1px 5px}
+.diagnosis{border-color:#b39560}.diagnosis strong{font-size:17px;color:#4c3020}.diagnosis p{font-size:13px;color:#6b5035}.label{font:small-caps 12px Georgia,serif;letter-spacing:1px;color:#79572f}
+.values{border-color:#b39560}.amount{font-size:23px;color:#5a391e}.reputation{font-style:italic;color:#71532d;font-size:12px}
+.actions{border-top:1px solid #ac8a535c;padding-top:10px;margin-top:13px}.state{font:italic 12px Georgia,serif;color:#81613e}
+button{font-family:'Palatino Linotype',Georgia,serif}.accept{background:linear-gradient(#68482d,#49301e);color:#f1d49a;border:1px solid #392517;outline:1px solid #b28a4d;outline-offset:-4px;box-shadow:0 2px 2px #5b3e2d33,inset 0 1px #a07b47;font-variant:small-caps;letter-spacing:.4px;padding:9px 22px;min-height:39px;position:relative}.accept:before{content:'◆';position:absolute;left:8px;top:15px;font-size:6px;color:#c8a468}.accept:hover{background:linear-gradient(#795736,#573a23)}
+.decline{color:#7a3928;font-style:italic}.back{border:3px double #99713c;background:#b3935c13;font-variant:small-caps;font-size:15px;padding:7px 17px;color:#5c3c22}.back:hover{background:#b3935c33}
+footer{margin-top:18px}.rules{color:#715438;font-size:12px}.rules strong{color:#55391f}.preview,.footnote{font-family:Georgia,serif}.preview{letter-spacing:2px;color:#d1b684}.footnote{font-style:italic;color:#c3ab82}
+@media(max-width:720px){.sheet{padding:24px 20px;border-width:5px}.sheet:before{background-size:40px}h1{font-size:25px}.day{width:52px;height:52px;padding-top:6px}.day strong{font-size:24px}.summary{font-size:12px}h2{font-size:23px}.condition{margin-left:0}.accept{padding:9px 15px}.accept:before{display:none}}

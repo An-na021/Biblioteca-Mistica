@@ -40,6 +40,7 @@ func run() -> void:
 	game._handle_stock_action(book_id, condition, "deliver", inventory_screen)
 	check(game.money == before + price + 8 and game.inventory.get_condition_quantity(book_id, condition) == stock - 1 and game.day_manager.served_today == 1, "Compra mantém cobrança, estoque e avanço da fila uma única vez")
 	check(game.sale_feedback.effects.has_node("SoldBook") and game.sale_feedback.get_node_or_null("DailyLedger") == null, "Venda mantém o livro em movimento sem escrever sobre o livro-caixa")
+	check(game.sale_feedback.effects.get_node("SoldBook").texture == preload("res://scripts/book_cover_art.gd").texture_for(BookCatalog.get_book(book_id), condition), "Livro entregue na animação tem a capa da condição efetivamente vendida")
 	check(not game.customer.visible and game.customer_transitions.departures.size() == 1, "Cliente atendido sai em uma transição visual independente")
 	var feedback_stack: VBoxContainer = game.notifications.notification_stack
 	var last_feedback := feedback_stack.get_child(feedback_stack.get_child_count() - 1) as Control
