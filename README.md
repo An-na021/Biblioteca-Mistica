@@ -1,4 +1,4 @@
-# Biblioteca
+﻿# Biblioteca
 
 Jogo em Godot 4 sobre administrar uma livraria aconchegante, descobrir as leituras dos clientes e planejar a reposição das estantes.
 
@@ -196,4 +196,3 @@ godot --path . --script tests/test_restoration_expansion.gd --log-file .godot/re
 As imagens ficam em `.godot/preview_*.png`.
 
 O teste de capas também grava `.godot/cover_*.png`: confere os quatro acabamentos nos oito títulos, a troca por condição no estoque e na loja e o resultado visual da restauração. Execute sem `--headless` para validar os pixels renderizados e gerar as capturas.
-
