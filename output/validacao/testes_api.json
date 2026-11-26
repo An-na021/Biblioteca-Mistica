@@ -1,0 +1,8 @@
+{
+  "command": "python -m unittest discover -s api/tests -v",
+  "exit_code": 0,
+  "tests": 34,
+  "seconds": 55.625,
+  "godot_integration_enabled": true,
+  "output": "testes_api.txt"
+}

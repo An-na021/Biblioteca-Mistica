@@ -158,6 +158,10 @@ class Database:
     def delete(self, resource, record_id):
         with self.connection(write=True) as connection:
             self._get(connection, resource, record_id)
+            if resource == "books" and connection.execute(
+                "SELECT 1 FROM reservation_stock WHERE book_id = ? AND reserved > 0", (record_id,)
+            ).fetchone():
+                raise CatalogError(409, "O livro possui reservas temporárias pendentes. Confirme, cancele ou aguarde a liberação.")
             connection.execute(f"DELETE FROM {resource} WHERE id = ?", (record_id,))
             self._validate_playable(connection)
 

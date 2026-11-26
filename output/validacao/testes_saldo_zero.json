@@ -1,0 +1,16 @@
+[
+  {
+    "script": "test_game_settings.gd",
+    "exit": 0,
+    "seconds": 12.12,
+    "pass_lines": 8,
+    "script_errors": false
+  },
+  {
+    "script": "test_game.gd",
+    "exit": 0,
+    "seconds": 6.84,
+    "pass_lines": 44,
+    "script_errors": false
+  }
+]

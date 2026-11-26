@@ -18,6 +18,9 @@ class ApiTests(unittest.TestCase):
         self.app = create_app(self.path)
         self.client = TestClient(self.app)
         self.client.__enter__()
+        self.app.state.auth.create_user("admin_testes", "SenhaDeTeste123", role="admin")
+        token = self.app.state.auth.login("admin_testes", "SenhaDeTeste123")["token"]
+        self.client.headers.update({"Authorization": f"Bearer {token}"})
 
     def tearDown(self):
         self.client.__exit__(None, None, None)

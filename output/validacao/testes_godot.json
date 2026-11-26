@@ -1,0 +1,225 @@
+[
+  {
+    "script": "test_atmosphere.gd",
+    "exit": 0,
+    "seconds": 17.49,
+    "pass_lines": 14,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_book_cover_art.gd",
+    "exit": 0,
+    "seconds": 6.92,
+    "pass_lines": 30,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_clock.gd",
+    "exit": 0,
+    "seconds": 14.49,
+    "pass_lines": 16,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_customer_profile.gd",
+    "exit": 0,
+    "seconds": 11.87,
+    "pass_lines": 91,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_hud.gd",
+    "exit": 0,
+    "seconds": 13.2,
+    "pass_lines": 19,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_newspaper.gd",
+    "exit": 0,
+    "seconds": 13.88,
+    "pass_lines": 10,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_order_purchases.gd",
+    "exit": 0,
+    "seconds": 15.06,
+    "pass_lines": 28,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_rare_stock.gd",
+    "exit": 0,
+    "seconds": 5.75,
+    "pass_lines": 13,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_reservations.gd",
+    "exit": 0,
+    "seconds": 5.44,
+    "pass_lines": 30,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_restart_confirmation.gd",
+    "exit": 0,
+    "seconds": 1.74,
+    "pass_lines": 7,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_restoration_bench.gd",
+    "exit": 0,
+    "seconds": 51.22,
+    "pass_lines": 69,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_restoration_expansion.gd",
+    "exit": 0,
+    "seconds": 111.09,
+    "pass_lines": 100,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_restoration_pickup.gd",
+    "exit": 0,
+    "seconds": 12.14,
+    "pass_lines": 28,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_restoration_quality.gd",
+    "exit": 0,
+    "seconds": 52.68,
+    "pass_lines": 32,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_shop_feedback.gd",
+    "exit": 0,
+    "seconds": 14.4,
+    "pass_lines": 14,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_shop_list.gd",
+    "exit": 0,
+    "seconds": 9.44,
+    "pass_lines": 13,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_window.gd",
+    "exit": 0,
+    "seconds": 8.57,
+    "pass_lines": 12,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_workshop.gd",
+    "exit": 0,
+    "seconds": 40.79,
+    "pass_lines": 51,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  },
+  {
+    "script": "test_game_settings.gd",
+    "exit": 0,
+    "seconds": 12.12,
+    "pass_lines": 8,
+    "script_errors": false
+  },
+  {
+    "script": "test_game.gd",
+    "exit": 0,
+    "seconds": 6.84,
+    "pass_lines": 44,
+    "script_errors": false
+  },
+  {
+    "script": "test_world.gd",
+    "exit": 0,
+    "seconds": 9.06,
+    "pass_lines": 56,
+    "script_errors": false,
+    "errors": [
+      "RESULT: 0 failure(s)",
+      "ERROR: Failed to read the root certificate store."
+    ]
+  }
+]

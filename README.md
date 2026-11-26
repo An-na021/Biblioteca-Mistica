@@ -4,11 +4,21 @@ Jogo em Godot 4 sobre administrar uma livraria aconchegante, descobrir as leitur
 
 O projeto também possui uma **API REST com SQLite e CRUD de livros, clientes e fornecedores**. Consulte [o guia da API](api/README.md) para iniciar o servidor, usar o Swagger e testar as requisições. Com o servidor ativo, novos jogos carregam o catálogo da API; partidas existentes preservam o catálogo com que foram salvas.
 
+A API inclui um portal local em `/portal`, com contas, reservas temporárias de exemplares, compras em moedas fictícias e administração. O [guia de instalação e uso](docs/INSTALACAO_E_USO.md) explica como demonstrar o jogo e o portal.
+
 ## Como abrir
 
 1. Importe o arquivo `project.godot` no Godot 4.7 ou compatível.
 2. Aperte **F5**.
 3. Escolha **Novo jogo** ou **Continuar** no menu inicial.
+
+## Documentação da entrega
+
+- [Instalação, configuração e uso](docs/INSTALACAO_E_USO.md).
+- [Arquitetura, padrões de projeto e extensão de funcionalidades](docs/ARQUITETURA.md).
+- [Decisões de arquitetura em PDF](output/pdf/Biblioteca_ADRs.pdf) e [fonte das ADRs](docs/ADRS.md).
+- [Roteiro da entrega, funcionalidades e validação](docs/ENTREGA.md).
+- [Repositório do projeto](https://github.com/An-na021/Biblioteca-master).
 
 ## Controles e atendimento
 
@@ -164,35 +174,4 @@ O clima alterna entre céu aberto, nuvens e chuva conforme o dia da partida, man
 
 ## Verificação
 
-Para verificar a interação do relógio, o horário real, os ponteiros, o retorno e o redimensionamento:
-
-```text
-godot --headless --path . --script tests/test_clock.gd --log-file .godot/clock_tests.log
-```
-
-Acrescente `-- --screenshots` e execute sem `--headless` para salvar as prévias em `.godot/preview_clock*.png`. A cena `scenes/clock_screen.tscn` também pode ser aberta diretamente no editor com **F6**.
-
-Execute, usando o caminho do seu executável do Godot:
-
-```text
-godot --headless --path . --script tests/test_game.gd --log-file .godot/tests.log
-godot --headless --path . --script tests/test_world.gd --log-file .godot/world_tests.log
-godot --headless --path . --script tests/test_reservations.gd --log-file .godot/reservations_tests.log
-godot --headless --path . --script tests/test_shop_list.gd --log-file .godot/shop_list_tests.log
-```
-
-Os testes usam salvamentos temporários dentro de `.godot`, sem modificar o progresso do jogador. Cobrem menus, pausa, modo tranquilo, busca, filtros, contagem de erros, compras, persistência, personalidades, recomendações, negociação, melhorias, eventos, encomendas, recompensas únicas, vários dias completos e leitura de arquivo corrompido.
-
-Para gerar capturas das telas durante a mesma verificação:
-
-```text
-godot --path . --script tests/test_game.gd --log-file .godot/visual_tests.log -- --screenshots
-godot --path . --script tests/test_world.gd --log-file .godot/world_visual_tests.log -- --screenshots
-godot --path . --script tests/test_reservations.gd --log-file .godot/reservations_visual_tests.log -- --screenshots
-godot --path . --script tests/test_book_cover_art.gd --log-file .godot/book_cover_tests.log -- --screenshots
-godot --path . --script tests/test_restoration_expansion.gd --log-file .godot/restoration_expansion.log -- --screenshots
-```
-
-As imagens ficam em `.godot/preview_*.png`.
-
-O teste de capas também grava `.godot/cover_*.png`: confere os quatro acabamentos nos oito títulos, a troca por condição no estoque e na loja e o resultado visual da restauração. Execute sem `--headless` para validar os pixels renderizados e gerar as capturas.
+Consulte o [guia de testes](tests/README.md) para executar as verificações e gerar capturas de tela.

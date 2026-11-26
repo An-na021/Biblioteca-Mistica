@@ -19,6 +19,10 @@ func run() -> void:
 	game.save_path = test_path
 	game.api_url = OS.get_environment("BIBLIOTECA_API_URL")
 	root.add_child(game)
+	# Reproduce a slow first frame after scene construction. Network deadlines
+	# must not consume this frame's accumulated delta before connecting.
+	if OS.get_cmdline_user_args().has("--slow-start"):
+		OS.delay_msec(5000)
 	var deadline := Time.get_ticks_msec() + 6000
 	while game.game_menu.new_button.disabled and Time.get_ticks_msec() < deadline:
 		await create_timer(0.05, true).timeout

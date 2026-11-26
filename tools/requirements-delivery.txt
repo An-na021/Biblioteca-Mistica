@@ -1,0 +1,2 @@
+# Apenas para gerar o PDF; não é necessário para executar o jogo ou a API.
+reportlab==5.1.2

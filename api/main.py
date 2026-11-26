@@ -6,28 +6,45 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, FastAPI, Query, Request, Response
+from fastapi import APIRouter, Depends, FastAPI, Query, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import ConfigDict, ValidationError, create_model
 
 from .database import CatalogError, Database, PACKAGE
 from .models import District, MODELS
+from .reservations import ReservationService
+from .auth import AuthService
+from .commerce import CommerceService
+from .commerce_router import auth_dependencies, commerce_router
+from .portal import portal_router
 
 
 def create_app(database_path: str | Path | None = None) -> FastAPI:
     database = Database(database_path or os.environ.get("BIBLIOTECA_DB_PATH", str(PACKAGE / "data" / "biblioteca.sqlite3")))
+    reservations = ReservationService(database)
+    auth = AuthService(database)
+    commerce = CommerceService(database, clock=lambda: reservations.clock())
+    current_user, administrator = auth_dependencies(auth)
 
     @asynccontextmanager
     async def lifespan(application):
         database.initialize()
-        yield
+        auth.initialize()
+        reservations.start()
+        try:
+            yield
+        finally:
+            reservations.stop()
 
     application = FastAPI(
         title="Biblioteca · API de catálogo", version="1.0.0", lifespan=lifespan,
         description="CRUD de livros, clientes e fornecedores. SQLite persistente. Os preços são inteiros em moedas; os identificadores são imutáveis. Alterações incompatíveis com os bairros retornam 409 e são desfeitas.",
     )
     application.state.database = database
+    application.state.reservations = reservations
+    application.state.auth = auth
+    application.state.commerce = commerce
 
     @application.exception_handler(CatalogError)
     async def catalog_error(request: Request, exception: CatalogError):
@@ -44,7 +61,7 @@ def create_app(database_path: str | Path | None = None) -> FastAPI:
 
     @application.get("/", include_in_schema=False)
     def index():
-        return RedirectResponse("/docs")
+        return RedirectResponse("/portal")
 
     @application.get("/api/health", tags=["Sistema"])
     def health():
@@ -54,14 +71,16 @@ def create_app(database_path: str | Path | None = None) -> FastAPI:
 
     @application.get("/api/catalog", tags=["Integração com o jogo"])
     def catalog():
-        return database.catalog()
+        return {**database.catalog(), "settings": commerce.settings()}
 
+    application.include_router(commerce_router(auth, commerce, reservations, current_user, administrator))
+    application.include_router(portal_router())
     for resource, schema in MODELS.items():
-        application.include_router(resource_router(database, resource, schema))
+        application.include_router(resource_router(database, resource, schema, administrator))
     return application
 
 
-def resource_router(database: Database, resource: str, schema):
+def resource_router(database: Database, resource: str, schema, administrator):
     router = APIRouter(prefix=f"/api/{resource}", tags=[resource], responses={
         404: {"description": "Registro não encontrado"},
         409: {"description": "Identificador repetido ou alteração incompatível com o jogo"},
@@ -84,24 +103,24 @@ def resource_router(database: Database, resource: str, schema):
     def get_record(record_id: str):
         return database.get(resource, record_id)
 
-    @router.post("", response_model=schema, status_code=201, summary="Cadastrar")
+    @router.post("", response_model=schema, status_code=201, summary="Cadastrar", dependencies=[Depends(administrator)])
     def create_record(payload: schema, response: Response):
         result = database.create(resource, payload.model_dump())
         response.headers["Location"] = f"/api/{resource}/{result['id']}"
         return result
 
-    @router.put("/{record_id}", response_model=schema, summary="Substituir todos os campos")
+    @router.put("/{record_id}", response_model=schema, summary="Substituir todos os campos", dependencies=[Depends(administrator)])
     def replace_record(record_id: str, payload: schema):
         return database.update(resource, record_id, payload.model_dump())
 
-    @router.patch("/{record_id}", response_model=schema, summary="Atualizar campos selecionados")
+    @router.patch("/{record_id}", response_model=schema, summary="Atualizar campos selecionados", dependencies=[Depends(administrator)])
     def patch_record(record_id: str, payload: patch_schema):
         changes = payload.model_dump(exclude_unset=True)
         if not changes:
             raise CatalogError(422, "Informe ao menos um campo para atualizar.")
         return database.update(resource, record_id, changes, partial=True)
 
-    @router.delete("/{record_id}", status_code=204, summary="Excluir")
+    @router.delete("/{record_id}", status_code=204, summary="Excluir", dependencies=[Depends(administrator)])
     def delete_record(record_id: str):
         database.delete(resource, record_id)
         return Response(status_code=204)

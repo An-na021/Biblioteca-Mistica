@@ -1,0 +1,41 @@
+C:\Users\Annam\Downloads\Biblioteca-master\Biblioteca-master\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+test_concurrent_writes_remain_consistent (test_api.ApiTests.test_concurrent_writes_remain_consistent) ... ok
+test_crud_of_all_three_resources (test_api.ApiTests.test_crud_of_all_three_resources) ... ok
+test_failed_mutation_rolls_back_related_records (test_api.ApiTests.test_failed_mutation_rolls_back_related_records) ... ok
+test_filters_and_pagination (test_api.ApiTests.test_filters_and_pagination) ... ok
+test_prices_risk_scenes_and_assets (test_api.ApiTests.test_prices_risk_scenes_and_assets) ... ok
+test_restart_does_not_reseed_edited_or_deleted_data (test_api.ApiTests.test_restart_does_not_reseed_edited_or_deleted_data) ... ok
+test_seed_health_and_openapi (test_api.ApiTests.test_seed_health_and_openapi) ... ok
+test_special_order_provider_can_be_replaced (test_api.ApiTests.test_special_order_provider_can_be_replaced) ... ok
+test_validation_and_immutable_identifiers (test_api.ApiTests.test_validation_and_immutable_identifiers) ... ok
+test_admin_settings_apply_to_new_wallet_without_resetting_existing (test_commerce.CommerceTests.test_admin_settings_apply_to_new_wallet_without_resetting_existing) ... ok
+test_authentication_and_administrator_boundaries (test_commerce.CommerceTests.test_authentication_and_administrator_boundaries) ... ok
+test_concurrent_checkout_retries_debit_only_once (test_commerce.CommerceTests.test_concurrent_checkout_retries_debit_only_once) ... ok
+test_expired_hold_and_client_price_override_are_rejected (test_commerce.CommerceTests.test_expired_hold_and_client_price_override_are_rejected) ... ok
+test_insufficient_funds_roll_back_every_payment_effect (test_commerce.CommerceTests.test_insufficient_funds_roll_back_every_payment_effect) ... ok
+test_owner_protection_prevents_read_cancel_and_checkout_from_another_account (test_commerce.CommerceTests.test_owner_protection_prevents_read_cancel_and_checkout_from_another_account) ... ok
+test_password_salts_and_session_tokens_are_not_stored_in_plaintext (test_commerce.CommerceTests.test_password_salts_and_session_tokens_are_not_stored_in_plaintext) ... ok
+test_payment_uses_server_price_and_is_idempotent (test_commerce.CommerceTests.test_payment_uses_server_price_and_is_idempotent) ... ok
+test_register_login_logout_and_explicit_player_role (test_commerce.CommerceTests.test_register_login_logout_and_explicit_player_role) ... ok
+test_session_expiration_is_enforced (test_commerce.CommerceTests.test_session_expiration_is_enforced) ... ok
+test_crud_is_consumed_by_the_game (test_game_integration.GameIntegrationTests.test_crud_is_consumed_by_the_game) ... ok
+test_catalog_delete_cannot_destroy_reserved_stock (test_reservations.ReservationHttpTests.test_catalog_delete_cannot_destroy_reserved_stock) ... ok
+test_stock_reserve_confirm_and_cancel_routes (test_reservations.ReservationHttpTests.test_stock_reserve_confirm_and_cancel_routes) ... ok
+test_batches_eventually_release_each_reservation_once (test_reservations.ReservationTests.test_batches_eventually_release_each_reservation_once) ... ok
+test_concurrent_reservations_never_oversell (test_reservations.ReservationTests.test_concurrent_reservations_never_oversell) ... ok
+test_confirm_is_idempotent_and_consumes_exactly_once (test_reservations.ReservationTests.test_confirm_is_idempotent_and_consumes_exactly_once) ... ok
+test_crash_between_mark_and_release_is_recovered_once (test_reservations.ReservationTests.test_crash_between_mark_and_release_is_recovered_once) ... ok
+test_discarded_cache_falls_back_to_database_and_can_be_rebuilt (test_reservations.ReservationTests.test_discarded_cache_falls_back_to_database_and_can_be_rebuilt) ... ok
+test_expiration_never_releases_early_and_is_idempotent (test_reservations.ReservationTests.test_expiration_never_releases_early_and_is_idempotent) ... ok
+test_expired_hold_cannot_be_confirmed_even_before_worker_runs (test_reservations.ReservationTests.test_expired_hold_cannot_be_confirmed_even_before_worker_runs) ... ok
+test_jitter_is_bounded_and_keeps_all_eight_minutes (test_reservations.ReservationTests.test_jitter_is_bounded_and_keeps_all_eight_minutes) ... ok
+test_reserve_cancel_is_idempotent_and_does_not_remove_stock (test_reservations.ReservationTests.test_reserve_cancel_is_idempotent_and_does_not_remove_stock) ... ok
+test_restart_recovers_schedule_from_database (test_reservations.ReservationTests.test_restart_recovers_schedule_from_database) ... ok
+test_separate_service_instances_share_atomic_stock (test_reservations.ReservationTests.test_separate_service_instances_share_atomic_stock) ... ok
+test_stock_and_input_validation_preserve_existing_hold (test_reservations.ReservationTests.test_stock_and_input_validation_preserve_existing_hold) ... ok
+
+----------------------------------------------------------------------
+Ran 34 tests in 55.625s
+
+OK

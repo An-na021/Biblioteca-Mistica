@@ -195,6 +195,7 @@ var sale_feedback: Control
 var customer_profiles: Array[Dictionary] = CUSTOMER_PROFILES.duplicate(true)
 var supplier_profiles: Array[Dictionary] = SUPPLIERS.duplicate(true)
 var catalog_snapshot: Dictionary = {}
+var game_settings: Dictionary = {}
 var api_url := OS.get_environment("BIBLIOTECA_API_URL") if OS.has_environment("BIBLIOTECA_API_URL") else "http://127.0.0.1:8000"
 
 func _ready() -> void:
@@ -485,7 +486,7 @@ func _current_district() -> Dictionary:
 	return DISTRICTS[0]
 
 func _current_customer_limit() -> int:
-	return int(_current_district().get("customer_ids", []).size())
+	return mini(int(_current_district().get("customer_ids", []).size()), int(game_settings.get("max_customers_per_day", DayManager.MAX_CUSTOMERS)))
 
 func _district_options() -> Array[Dictionary]:
 	var options: Array[Dictionary] = []
@@ -1265,6 +1266,7 @@ func _continue_game() -> void:
 		customer_profiles = CUSTOMER_PROFILES.duplicate(true)
 		supplier_profiles = SUPPLIERS.duplicate(true)
 		catalog_snapshot.clear()
+		game_settings.clear()
 	elif not _apply_catalog(data.catalog):
 		game_menu.note.text = "O catálogo desta partida está inválido. Não foi possível continuar."
 		return
@@ -1518,6 +1520,18 @@ func _load_api_catalog() -> void:
 	game_menu.note.text = original_note + ("\nCatálogo atualizado." if connected else "\nUsando o catálogo local.")
 
 func _apply_catalog(data: Dictionary) -> bool:
+	var settings: Variant = data.get("settings", {})
+	if not settings is Dictionary:
+		return false
+	for key in ["starting_money", "max_customers_per_day"]:
+		if settings.has(key):
+			var value: Variant = settings[key]
+			if (not value is int and not value is float) or not is_finite(float(value)) or float(value) != float(int(value)):
+				return false
+			if key == "starting_money" and (int(value) < 0 or int(value) > 10000):
+				return false
+			if key == "max_customers_per_day" and (int(value) < 1 or int(value) > DayManager.MAX_CUSTOMERS):
+				return false
 	for key in ["books", "customers", "suppliers"]:
 		if not data.get(key) is Array or data[key].is_empty():
 			return false
@@ -1538,5 +1552,6 @@ func _apply_catalog(data: Dictionary) -> bool:
 		return false
 	customer_profiles.assign(data.customers)
 	supplier_profiles.assign(data.suppliers)
+	game_settings = settings.duplicate(true)
 	catalog_snapshot = data.duplicate(true)
 	return true

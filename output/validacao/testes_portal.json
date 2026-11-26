@@ -1,0 +1,24 @@
+{
+  "test": "isolated jsdom DOM with temporary local HTTP API",
+  "jsdom_version": "29.1.1",
+  "passed": 15,
+  "checks": [
+    "Initial page shows local login",
+    "Administrator sees catalog and administration",
+    "Administration tab opens settings",
+    "Administrator settings persist through real HTTP",
+    "Administrator logout and player registration reset restricted tabs",
+    "New player receives the configured coin balance",
+    "Player cannot change administrator settings",
+    "Reservation appears with a stable checkout key",
+    "Reservation countdown uses the server deadline",
+    "Temporary HTTP 503 preserves reservation and checkout key",
+    "Checkout consumes the reservation and debits the displayed coin price once",
+    "Purchased book appears in the player library",
+    "Payment history shows the purchase amount",
+    "Logout clears the local session",
+    "Portal JavaScript finishes without DOM runtime errors: "
+  ],
+  "failed": false,
+  "error": null
+}

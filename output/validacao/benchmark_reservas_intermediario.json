@@ -1,0 +1,470 @@
+{
+  "generated_at_utc": "2026-11-26T13:02:34.735839+00:00",
+  "environment": {
+    "python": "3.13.7",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "methodology": {
+    "layer": "In-process ReservationService + real SQLite, no HTTP/network",
+    "clock": "Frozen creation; jump forward 480 seconds; then follow real elapsed time",
+    "expiration_ttl_seconds": 480,
+    "release_target_seconds": 5,
+    "other_operations_p95_ratio_limit": 1.2,
+    "count_per_case": 3000,
+    "traffic_workers": 4,
+    "offered_operations_per_worker_second": 100,
+    "traffic_mix": "Alternating stock read and reserve+cancel on a separate book",
+    "observation_window_seconds": 5,
+    "poll_seconds": 0.1,
+    "baseline": "Same holds and traffic, but reservations do not expire during the window",
+    "limitations": [
+      "Synthetic simultaneous deadlines; virtual passage of the initial eight minutes",
+      "Single local host and single benchmark run per configuration",
+      "Latency excludes HTTP, network and UI; this is not proof of thousands of online users"
+    ]
+  },
+  "optimized_criteria_passed": false,
+  "cases": [
+    {
+      "name": "baseline",
+      "batch_size": 256,
+      "jitter_seconds": 1,
+      "schedule_cache": true,
+      "expiry_enabled": false,
+      "preparation_seconds": 61.5643220001366,
+      "measured_seconds": 5.187695299973711,
+      "poll_cycles": 30,
+      "reservations": 3000,
+      "remaining_reserved": 3000,
+      "released_percent": 0,
+      "first_release_seconds": null,
+      "all_released_seconds": null,
+      "all_released_within_5_seconds": null,
+      "latency": {
+        "all": {
+          "samples": 217,
+          "p50_ms": 80.39719983935356,
+          "p95_ms": 206.58362000249318,
+          "max_ms": 347.58599987253547,
+          "mean_ms": 93.11153917157087
+        },
+        "stock_read": {
+          "samples": 108,
+          "p50_ms": 52.980749984271824,
+          "p95_ms": 108.19301493465899,
+          "max_ms": 258.16109986044466,
+          "mean_ms": 58.544512031841336
+        },
+        "reserve_and_cancel": {
+          "samples": 109,
+          "p50_ms": 116.34139996021986,
+          "p95_ms": 225.88464007712898,
+          "max_ms": 347.58599987253547,
+          "mean_ms": 127.36143762194509
+        }
+      },
+      "traffic_errors": [],
+      "service_metrics": {
+        "marked_total": 0,
+        "released_total": 0,
+        "mark_batches": 0,
+        "release_batches": 0,
+        "cache_recoveries": 0,
+        "last_process_duration_seconds": 0.05705499998293817,
+        "max_release_lag_seconds": 0.0,
+        "worker_errors": 0,
+        "active": 3000,
+        "pending_release": 0,
+        "expired": 0,
+        "confirmed": 0,
+        "cancelled": 109,
+        "oldest_overdue_seconds": 0.0,
+        "heap_entries": 3107,
+        "cache_healthy": true,
+        "worker_running": false,
+        "marked": 0,
+        "released": 0
+      }
+    },
+    {
+      "name": "batch_1_jitter_0",
+      "batch_size": 1,
+      "jitter_seconds": 0,
+      "schedule_cache": true,
+      "expiry_enabled": true,
+      "preparation_seconds": 68.61125700012781,
+      "measured_seconds": 5.112271300051361,
+      "poll_cycles": 12,
+      "reservations": 3000,
+      "remaining_reserved": 2988,
+      "released_percent": 0.4,
+      "first_release_seconds": 0.23197119985707104,
+      "all_released_seconds": null,
+      "all_released_within_5_seconds": false,
+      "latency": {
+        "all": {
+          "samples": 182,
+          "p50_ms": 94.22124992124736,
+          "p95_ms": 258.39974494883785,
+          "max_ms": 467.939900001511,
+          "mean_ms": 112.00288352735627
+        },
+        "stock_read": {
+          "samples": 90,
+          "p50_ms": 59.30119997356087,
+          "p95_ms": 184.01241502724582,
+          "max_ms": 393.40980001725256,
+          "mean_ms": 75.43897666554484
+        },
+        "reserve_and_cancel": {
+          "samples": 92,
+          "p50_ms": 133.80239997059107,
+          "p95_ms": 286.64499004371476,
+          "max_ms": 467.939900001511,
+          "mean_ms": 147.77192284869355
+        }
+      },
+      "traffic_errors": [],
+      "service_metrics": {
+        "marked_total": 12,
+        "released_total": 12,
+        "mark_batches": 12,
+        "release_batches": 12,
+        "cache_recoveries": 0,
+        "last_process_duration_seconds": 0.2787966998293996,
+        "max_release_lag_seconds": 4.756308555603027,
+        "worker_errors": 0,
+        "active": 2991,
+        "pending_release": 0,
+        "expired": 12,
+        "confirmed": 0,
+        "cancelled": 89,
+        "oldest_overdue_seconds": 4.756308555603027,
+        "heap_entries": 3078,
+        "cache_healthy": true,
+        "worker_running": false,
+        "marked": 1,
+        "released": 1
+      },
+      "latency_comparison": {
+        "all": {
+          "p95_ratio_to_baseline": 1.2508239760040962,
+          "within_20_percent": false
+        },
+        "stock_read": {
+          "p95_ratio_to_baseline": 1.7007790672843015,
+          "within_20_percent": false
+        },
+        "reserve_and_cancel": {
+          "p95_ratio_to_baseline": 1.268988409065083,
+          "within_20_percent": false
+        }
+      },
+      "criteria_passed": false
+    },
+    {
+      "name": "batch_1_jitter_1",
+      "batch_size": 1,
+      "jitter_seconds": 1,
+      "schedule_cache": true,
+      "expiry_enabled": true,
+      "preparation_seconds": 65.45260390010662,
+      "measured_seconds": 5.005971200065687,
+      "poll_cycles": 12,
+      "reservations": 3000,
+      "remaining_reserved": 2988,
+      "released_percent": 0.4,
+      "first_release_seconds": 0.3514157000463456,
+      "all_released_seconds": null,
+      "all_released_within_5_seconds": false,
+      "latency": {
+        "all": {
+          "samples": 204,
+          "p50_ms": 83.64054991398007,
+          "p95_ms": 242.89960995083666,
+          "max_ms": 416.6178999003023,
+          "mean_ms": 99.79378970627509
+        },
+        "stock_read": {
+          "samples": 101,
+          "p50_ms": 50.882200011983514,
+          "p95_ms": 106.88069998286664,
+          "max_ms": 230.40579981170595,
+          "mean_ms": 58.34543961561331
+        },
+        "reserve_and_cancel": {
+          "samples": 103,
+          "p50_ms": 121.77369999699295,
+          "p95_ms": 278.6428099730981,
+          "max_ms": 416.6178999003023,
+          "mean_ms": 140.43731746507936
+        }
+      },
+      "traffic_errors": [],
+      "service_metrics": {
+        "marked_total": 12,
+        "released_total": 12,
+        "mark_batches": 12,
+        "release_batches": 12,
+        "cache_recoveries": 0,
+        "last_process_duration_seconds": 0.23147279978729784,
+        "max_release_lag_seconds": 4.640491247177124,
+        "worker_errors": 0,
+        "active": 2988,
+        "pending_release": 0,
+        "expired": 12,
+        "confirmed": 0,
+        "cancelled": 99,
+        "oldest_overdue_seconds": 4.640491247177124,
+        "heap_entries": 3087,
+        "cache_healthy": true,
+        "worker_running": false,
+        "marked": 1,
+        "released": 1
+      },
+      "latency_comparison": {
+        "all": {
+          "p95_ratio_to_baseline": 1.1757931725076034,
+          "within_20_percent": true
+        },
+        "stock_read": {
+          "p95_ratio_to_baseline": 0.9878706129727054,
+          "within_20_percent": true
+        },
+        "reserve_and_cancel": {
+          "p95_ratio_to_baseline": 1.2335624497440583,
+          "within_20_percent": false
+        }
+      },
+      "criteria_passed": false
+    },
+    {
+      "name": "batch_256_jitter_0",
+      "batch_size": 256,
+      "jitter_seconds": 0,
+      "schedule_cache": true,
+      "expiry_enabled": true,
+      "preparation_seconds": 63.27038849983364,
+      "measured_seconds": 5.078369300113991,
+      "poll_cycles": 14,
+      "reservations": 3000,
+      "remaining_reserved": 0,
+      "released_percent": 100.0,
+      "first_release_seconds": 0.3138521001674235,
+      "all_released_seconds": 4.740184800000861,
+      "all_released_within_5_seconds": true,
+      "latency": {
+        "all": {
+          "samples": 195,
+          "p50_ms": 90.27789998799562,
+          "p95_ms": 232.30709000490594,
+          "max_ms": 306.03650002740324,
+          "mean_ms": 103.64062718760509
+        },
+        "stock_read": {
+          "samples": 97,
+          "p50_ms": 54.06780005432665,
+          "p95_ms": 110.11920007877032,
+          "max_ms": 170.40459997951984,
+          "mean_ms": 59.23658042675672
+        },
+        "reserve_and_cancel": {
+          "samples": 98,
+          "p50_ms": 133.01549991592765,
+          "p95_ms": 279.93174009025097,
+          "max_ms": 306.03650002740324,
+          "mean_ms": 147.59157143048563
+        }
+      },
+      "traffic_errors": [],
+      "service_metrics": {
+        "marked_total": 3000,
+        "released_total": 3000,
+        "mark_batches": 12,
+        "release_batches": 12,
+        "cache_recoveries": 0,
+        "last_process_duration_seconds": 0.060360899893566966,
+        "max_release_lag_seconds": 4.434956789016724,
+        "worker_errors": 0,
+        "active": 1,
+        "pending_release": 0,
+        "expired": 3000,
+        "confirmed": 0,
+        "cancelled": 96,
+        "oldest_overdue_seconds": 0.0,
+        "heap_entries": 97,
+        "cache_healthy": true,
+        "worker_running": false,
+        "marked": 0,
+        "released": 0
+      },
+      "latency_comparison": {
+        "all": {
+          "p95_ratio_to_baseline": 1.124518439565065,
+          "within_20_percent": true
+        },
+        "stock_read": {
+          "p95_ratio_to_baseline": 1.0178032301371267,
+          "within_20_percent": true
+        },
+        "reserve_and_cancel": {
+          "p95_ratio_to_baseline": 1.239268593006888,
+          "within_20_percent": false
+        }
+      },
+      "criteria_passed": false
+    },
+    {
+      "name": "batch_256_jitter_1",
+      "batch_size": 256,
+      "jitter_seconds": 1,
+      "schedule_cache": true,
+      "expiry_enabled": true,
+      "preparation_seconds": 69.54473540000618,
+      "measured_seconds": 5.623578500002623,
+      "poll_cycles": 12,
+      "reservations": 3000,
+      "remaining_reserved": 184,
+      "released_percent": 93.86666666666666,
+      "first_release_seconds": 0.543994499836117,
+      "all_released_seconds": null,
+      "all_released_within_5_seconds": false,
+      "latency": {
+        "all": {
+          "samples": 164,
+          "p50_ms": 109.60474994499236,
+          "p95_ms": 264.85501512652263,
+          "max_ms": 397.6630999241024,
+          "mean_ms": 123.36616097415639
+        },
+        "stock_read": {
+          "samples": 81,
+          "p50_ms": 67.32729985378683,
+          "p95_ms": 154.1123001370579,
+          "max_ms": 185.38729986175895,
+          "mean_ms": 75.64625679227856
+        },
+        "reserve_and_cancel": {
+          "samples": 83,
+          "p50_ms": 146.9481000676751,
+          "p95_ms": 320.5468701664356,
+          "max_ms": 397.6630999241024,
+          "mean_ms": 169.93618794683232
+        }
+      },
+      "traffic_errors": [],
+      "service_metrics": {
+        "marked_total": 2816,
+        "released_total": 2816,
+        "mark_batches": 11,
+        "release_batches": 11,
+        "cache_recoveries": 0,
+        "last_process_duration_seconds": 0.2551808999851346,
+        "max_release_lag_seconds": 4.90940523147583,
+        "worker_errors": 0,
+        "active": 186,
+        "pending_release": 0,
+        "expired": 2816,
+        "confirmed": 0,
+        "cancelled": 84,
+        "oldest_overdue_seconds": 4.90940523147583,
+        "heap_entries": 268,
+        "cache_healthy": true,
+        "worker_running": false,
+        "marked": 256,
+        "released": 256
+      },
+      "latency_comparison": {
+        "all": {
+          "p95_ratio_to_baseline": 1.2820717108322828,
+          "within_20_percent": false
+        },
+        "stock_read": {
+          "p95_ratio_to_baseline": 1.4244200536433054,
+          "within_20_percent": false
+        },
+        "reserve_and_cancel": {
+          "p95_ratio_to_baseline": 1.4190733378638933,
+          "within_20_percent": false
+        }
+      },
+      "criteria_passed": false
+    },
+    {
+      "name": "batch_256_jitter_1_db_fallback",
+      "batch_size": 256,
+      "jitter_seconds": 1,
+      "schedule_cache": false,
+      "expiry_enabled": true,
+      "preparation_seconds": 64.75933819985949,
+      "measured_seconds": 5.278015800053254,
+      "poll_cycles": 10,
+      "reservations": 3000,
+      "remaining_reserved": 696,
+      "released_percent": 76.8,
+      "first_release_seconds": 0.8044316000305116,
+      "all_released_seconds": null,
+      "all_released_within_5_seconds": false,
+      "latency": {
+        "all": {
+          "samples": 172,
+          "p50_ms": 107.27285000029951,
+          "p95_ms": 258.54100992437446,
+          "max_ms": 357.08460002206266,
+          "mean_ms": 118.28389361251665
+        },
+        "stock_read": {
+          "samples": 86,
+          "p50_ms": 61.75480003003031,
+          "p95_ms": 143.76535004703328,
+          "max_ms": 214.93869996629655,
+          "mean_ms": 75.06855000839244
+        },
+        "reserve_and_cancel": {
+          "samples": 86,
+          "p50_ms": 147.2390501294285,
+          "p95_ms": 288.4667999460362,
+          "max_ms": 357.08460002206266,
+          "mean_ms": 161.49923721664086
+        }
+      },
+      "traffic_errors": [],
+      "service_metrics": {
+        "marked_total": 2304,
+        "released_total": 2304,
+        "mark_batches": 9,
+        "release_batches": 9,
+        "cache_recoveries": 0,
+        "last_process_duration_seconds": 0.23232790012843907,
+        "max_release_lag_seconds": 4.948702573776245,
+        "worker_errors": 0,
+        "active": 697,
+        "pending_release": 0,
+        "expired": 2304,
+        "confirmed": 0,
+        "cancelled": 90,
+        "oldest_overdue_seconds": 4.948702573776245,
+        "heap_entries": 0,
+        "cache_healthy": false,
+        "worker_running": false,
+        "marked": 256,
+        "released": 256
+      },
+      "latency_comparison": {
+        "all": {
+          "p95_ratio_to_baseline": 1.2515077909916297,
+          "within_20_percent": false
+        },
+        "stock_read": {
+          "p95_ratio_to_baseline": 1.3287858752605932,
+          "within_20_percent": false
+        },
+        "reserve_and_cancel": {
+          "p95_ratio_to_baseline": 1.2770536316570191,
+          "within_20_percent": false
+        }
+      },
+      "criteria_passed": false
+    }
+  ]
+}

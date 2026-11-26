@@ -41,3 +41,7 @@ api/data/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Arquivos intermediários e pacote local da entrega
+/tmp/
+/output/entrega/
